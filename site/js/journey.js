@@ -82,7 +82,19 @@
   };
 
   // ---------- 2. Create ----------
-  function partsList(when, dark) {
+  function cocreate(when, dark) {
+    var ai = AF.aiShare(when === 'now' ? 'now' : 'created');
+    return '<div class="cocreate' + (dark ? ' dark' : '') + '">' +
+      '<div class="cocreate-head"><span class="cocreate-title">Co-creation</span><b>AI ' + ai + '% · Human ' + (100 - ai) + '%</b>' +
+      '<button type="button" class="info-btn" data-info aria-expanded="false" aria-label="How AttriFlow weighs the parts">i</button></div>' +
+      '<span class="part-mix big" role="img" aria-label="AI ' + ai + '%, human ' + (100 - ai) + '%"><i class="ai" style="width:' + ai + '%"></i><i class="human" style="width:' + (100 - ai) + '%"></i></span>' +
+      '<p class="cocreate-note">AttriFlow weighs these parts and sets the song’s co-creation at ' + ai + '% AI and ' + (100 - ai) + '% human.</p>' +
+      '<div class="info-pop" hidden><p>Each part counts by how much it shapes the song: ' +
+      AF.PARTS.map(function (p) { return p.name.toLowerCase() + ' ' + Math.round(p.weight * 100) + '%'; }).join(', ') + '. ' +
+      'AttriFlow multiplies each part’s AI share by its weight and adds them up. The result sets the AI influence royalty pool, ' +
+      'and it is checked again when the song reaches a distributor.</p><a href="#" data-method>More information</a></div></div>';
+  }
+  function partsList(when, dark, withTotal) {
     return '<ul class="parts' + (dark ? ' dark' : '') + '">' + AF.PARTS.map(function (p) {
       var now = when === 'now';
       var kind = now && p.kindNow ? p.kindNow : p.kind, label = now && p.labelNow ? p.labelNow : p.label;
@@ -93,7 +105,7 @@
           ? '<span class="part-mix" role="img" aria-label="AI ' + p.ai + '%, human ' + (100 - p.ai) + '%"><i class="ai" style="width:' + p.ai + '%"></i><i class="human" style="width:' + (100 - p.ai) + '%"></i></span>'
           : '') +
         '<span class="pill ' + tone + '">' + label + '</span></li>';
-    }).join('') + '</ul>';
+    }).join('') + '</ul>' + (withTotal ? cocreate(when, dark) : '');
   }
   AF.partsList = partsList;
   function infRow(c) {
@@ -121,7 +133,7 @@
       '<div class="song-meta"><h2>' + T.title + '</h2><p class="muted">Made by ' + T.user + ' with SongSpark · ' + T.length + ' · ' + T.bpm + ' BPM · ' + T.key + '</p>' +
       '<div class="wave" data-wave aria-hidden="true"></div></div>' + AF.playBtn('main') + '</div>' +
       '<div class="gen-panels reveal">' +
-      '<div class="inspired"><h3>What is AI, what is human</h3><p class="muted">You added the percussion. The AI made the rest.</p>' + partsList('created', true) + '</div>' +
+      '<div class="inspired"><h3>What is AI, what is human</h3><p class="muted">You added the percussion. The AI made the rest.</p>' + partsList('created', true, true) + '</div>' +
       '<div class="inspired"><h3>Who influenced the AI parts</h3><p class="muted">LUMINA attribution: ' + AF.CATALOG.length + ' licensed songs shaped the AI parts. The top ' + AF.TOP + ':</p>' + influenceList() + '</div>' +
       '</div>';
   }
@@ -227,7 +239,7 @@
       AF.pill('good', 'Verified', 'shield') + '</div>' +
       '<div class="passport-id">' + AF.cover(T, 'sm') + '<div><b>' + T.title + '</b><span class="muted">' + T.user + '</span></div></div>' +
       '<dl class="fields">' + fields.map(function (f) { return '<div><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join('') + '</dl>' +
-      '<h3 class="passport-sub">What happened inside the song so far</h3>' + partsList('created', false) +
+      '<h3 class="passport-sub">What happened inside the song so far</h3>' + partsList('created', false, true) +
       '<h3 class="passport-sub">Checks</h3><ul class="status-list">' +
       AF.statusRow('LUMINA attribution', 'Scored and available', 'good', 'flow') +
       AF.statusRow('Fingerprint', 'Registered', 'good', 'fingerprint') +
@@ -288,17 +300,20 @@
 
   // ---------- 5. Submit: AI flag, re-analysis, re-score ----------
   function weighRow(label, share, pool, now) {
-    return '<div class="weigh-row' + (now ? ' now' : '') + '"><span class="weigh-label">' + label + '</span>' +
+    return '<div class="weigh-row' + (now ? ' is-now' : '') + '"><span class="weigh-label">' + label + '</span>' +
       '<div class="weigh"><span class="w-ai" style="flex:' + share + '">AI ' + share + '%</span><span class="w-human" style="flex:' + (100 - share) + '">Human ' + (100 - share) + '%</span></div>' +
       '<span class="weigh-pool">Pool <b>' + pool + '%</b></span></div>';
+  }
+  function cmpBar(ai) {
+    return '<span class="cmp" role="img" aria-label="AI ' + ai + '%, human ' + (100 - ai) + '%"><i class="ai" style="width:' + ai + '%"></i><i class="human" style="width:' + (100 - ai) + '%"></i></span>';
   }
   function analysisHtml() {
     var m = AF.money();
     var rows = AF.PARTS.map(function (p) {
       var changed = p.ai !== p.aiNow;
       return '<tr' + (changed ? ' class="hl"' : '') + '><th scope="row"><span class="part-ico ' + AF.partTone(changed && p.kindNow ? p.kindNow : p.kind) + '">' + icon(AF.partIcon(p.name)) + '</span>' + p.name + '</th>' +
-        '<td><span class="cmp"><i style="width:' + p.ai + '%"></i></span><span class="cmp-num">' + p.ai + '% AI</span></td>' +
-        '<td><span class="cmp now"><i style="width:' + p.aiNow + '%"></i></span><span class="cmp-num">' + (changed ? '100% human' : p.aiNow + '% AI') + '</span></td>' +
+        '<td>' + cmpBar(p.ai) + '<span class="cmp-num">' + p.ai + '% AI</span></td>' +
+        '<td>' + cmpBar(p.aiNow) + '<span class="cmp-num">' + (changed ? '100% human' : p.aiNow + '% AI') + '</span></td>' +
         '<td>' + (changed ? AF.pill('warn', 'Re-scored', 'sliders') : AF.pill('good', 'Match', 'check')) + '</td></tr>';
     }).join('');
     return '<div class="modal-head good">' + icon('search') + '<h2 id="modal-title">AttriFlow re-analysis</h2></div>' +
@@ -430,7 +445,7 @@
         '<div class="lanes"><div class="lane g on"><b>GREEN</b><span>Distribute</span></div><div class="lane a"><b>AMBER</b><span>Review</span></div><div class="lane r"><b>RED</b><span>Hold</span></div></div>' +
         '<h3 class="sub-h">Where it can go</h3>' + dspGrid() +
         '<section class="pitch"><div class="pitch-head">' + AF.badge('shield', 'good') +
-        '<h3>You’re an ethical AI artist, ' + T.user.split(' ')[0] + '.</h3></div>' +
+        '<h3>' + T.user.split(' ')[0] + ', you’re an artist who uses AI ethically.</h3></div>' +
         '<p>Your song is verified, traceable and fair to the artists who shaped it. You’re one of the artists releasing AI music the right way, and that opens the <b>AttriFlow AI Green Lane</b>.</p>' +
         '<p class="pitch-sub">You can now:</p>' +
         '<ul class="benefits">' + BENEFITS.map(function (b) { return '<li>' + icon('check') + '<span><b>' + b[0] + '</b>: ' + b[1] + '</span></li>'; }).join('') + '</ul></section>' +
@@ -519,23 +534,22 @@
         return '<tr><th scope="row"><b>' + p.name + '</b></th><td>' + p.side + '</td><td class="num">' + p.songs + '</td><td class="num">' + usd(p.amt) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   };
-  AF.songTable = function (m) {
-    return '<details class="show-all"><summary>Show all ' + AF.CATALOG.length + ' songs</summary><div class="table-wrap"><table class="table">' +
-      '<thead><tr><th>Song</th><th class="num">Influence</th><th class="num">Songwriting</th><th class="num">Recording</th><th class="num">Total</th></tr></thead><tbody>' +
+  AF.songTable = function (m, open) {
+    return (open ? '' : '<details class="show-all"><summary>Show all ' + AF.CATALOG.length + ' songs</summary>') + '<div class="table-wrap"><table class="table">' +
+      '<thead><tr><th>Song</th><th class="num">Influence</th><th class="num">Publishing (50%)</th><th class="num">Recording (50%)</th><th class="num">Total</th></tr></thead><tbody>' +
       m.rh.map(function (r) {
         return '<tr><th scope="row"><b>' + r.song + '</b><small>' + r.artist + '</small></th><td class="num">' + r.pct + '%</td>' +
           '<td class="num">' + usd(r.write) + '<small>' + r.publisher + '</small></td><td class="num">' + usd(r.rec) + '<small>' + r.label + '</small></td>' +
           '<td class="num"><b>' + usd(r.amt) + '</b></td></tr>';
-      }).join('') + '</tbody></table></div></details>';
+      }).join('') + '</tbody></table></div>' + (open ? '' : '</details>');
   };
   V.pay = {
     step: 7,
     html: function () {
       var m = AF.money();
-      var parts = [m.user, m.rhPool, m.dist, m.ai, m.fold];
       var right =
         '<section class="card"><div class="gross"><div><p class="card-eyebrow">Net distribution revenue · this month · illustrative</p>' +
-        '<p class="gross-num">' + usd(m.net) + '</p><p class="muted">' + AF.num(m.streams) + ' streams × ¼¢ per stream</p></div>' +
+        '<p class="gross-num">' + usd(m.net) + '</p><p class="muted">' + AF.num(m.streams) + ' streams</p></div>' +
         '<div class="pool-box"><p class="card-eyebrow">AI influence royalty pool</p>' +
         '<div class="pool-meter" role="img" aria-label="Pool set to ' + m.pool + '% of a 30% maximum"><i style="width:' + (m.pool / 30 * 100) + '%"></i></div>' +
         '<div class="pool-ticks" aria-hidden="true"><span>10%</span><span>20%</span><span>30%</span></div>' +
@@ -543,15 +557,10 @@
         AF.netSplit(m) + '</section>' +
         '<section class="card"><div class="card-head"><h3>AI influence royalty pool</h3><span class="muted">' + usd(m.poolAmt) + '</span></div>' +
         AF.poolSplit(m) +
-        '<p class="muted small" style="margin-top:12px">' + T.distributor + ' keeps its 5% and sends the other 95% (' + usd(m.toFold) + ') to Fold. Fold pays the rightsholders and SongSpark, and keeps its 5%.</p></section>' +
-        '<section class="card"><div class="card-head"><h3>' + AF.RIGHTSHOLDERS + ' rightsholders paid from the pool</h3><span class="muted">' + usd(m.rhPool) + ' · ' + AF.CATALOG.length + ' songs</span></div>' +
-        AF.payeeTable(m) + AF.songTable(m) +
-        '<div class="sum">' + parts.map(usd).join(' + ') + ' = ' + usd(m.counted) + ' ' +
-        (m.counted === m.net ? icon('check', 'ok') : icon('alert', 'warn')) + '<p>Every cent of net streaming revenue is counted.</p></div>' +
+        '<p class="muted small" style="margin-top:12px">' + T.distributor + ' keeps its 5% and sends the other 95% (' + usd(m.toFold) + ') to Fold. Fold pays the rightsholders and SongSpark, and keeps its 5%.</p>' +
         '<div class="actions"><a class="btn btn-primary btn-big" href="#/dash/user">' + icon('user') + 'Open my dashboard</a></div></section>';
       return AF.stage(8, 'AttriFlow', 'The money flows back',
-        ['The stores pay the recording side a quarter of a cent per stream. That is the net revenue the distributor receives.',
-         T.distributor + ' pays Sam ' + (100 - m.pool) + '% directly. The other ' + m.pool + '% is the AI influence royalty pool, split by the LUMINA influence scores: <b>bigger influence, bigger share</b>.',
+        [T.distributor + ' pays Sam ' + (100 - m.pool) + '% of the distribution revenue directly. The other ' + m.pool + '% is the AI influence royalty pool, and the rightsholder share of it is split by the LUMINA influence scores: <b>bigger influence, bigger share</b>.',
          'Generation → attribution → distribution → streaming → revenue → rightsholders.'],
         right, 'LUMINA attribution · AttriFlow ledger');
     }

@@ -509,6 +509,29 @@
     document.body.classList.remove('modal-open');
   };
 
+  // ---------- how AttriFlow weighs co-creation ----------
+  AF.methodHtml = function () {
+    var then = AF.aiShare('created'), now = AF.aiShare('now');
+    var rows = AF.PARTS.map(function (p) {
+      return '<tr><th scope="row">' + p.name + '</th><td class="num">' + Math.round(p.weight * 100) + '%</td>' +
+        '<td class="num">' + p.ai + '%</td><td class="num">' + (p.ai * p.weight).toFixed(1) + '</td>' +
+        '<td class="num">' + p.aiNow + '%</td><td class="num">' + (p.aiNow * p.weight).toFixed(1) + '</td></tr>';
+    }).join('');
+    return '<div class="modal-head">' + AF.icon('sliders') + '<h2 id="modal-title">How AttriFlow weighs co-creation</h2></div>' +
+      '<div class="analysis">' +
+      '<section><h3>1. Each part gets a weight</h3><p class="muted small">The weight is how much the part shapes the song. The composition matters most; production least.</p>' +
+      '<div class="table-wrap"><table class="table"><thead><tr><th>Part</th><th class="num">Weight</th><th class="num">AI at creation</th><th class="num">Adds</th><th class="num">AI at distribution</th><th class="num">Adds</th></tr></thead><tbody>' +
+      rows + '<tr class="hl"><th scope="row"><b>Co-creation</b></th><td class="num">100%</td><td></td><td class="num"><b>' + then + '% AI</b></td><td></td><td class="num"><b>' + now + '% AI</b></td></tr>' +
+      '</tbody></table></div></section>' +
+      '<section><h3>2. The co-creation sets the pool</h3><div class="tiers">' +
+      [[30, '70% AI or more'], [20, '40% to 70% AI'], [10, 'under 40% AI']].map(function (t) {
+        return '<div class="tier"><b>' + t[0] + '%</b><span>' + t[1] + '</span></div>';
+      }).join('') + '</div><p class="muted small">The pool is the share of net streaming revenue that goes to those who influenced the AI parts. The user keeps the rest.</p></section>' +
+      '<section><h3>3. It is checked again at distribution</h3><p class="muted small">When the song reaches a distributor, AttriFlow compares what it hears with the fingerprint recorded at creation. ' +
+      'Parts changed after download, such as a newly recorded human vocal, are re-scored, and the pool follows. The Letter of Direction sets the order: fingerprint record first, then the latest detection.</p></section>' +
+      '</div><div class="modal-actions"><button type="button" class="btn btn-primary" id="m-close" data-autofocus>Got it</button></div>';
+  };
+
   // ---------- building blocks ----------
   AF.appWindow = function (kind, name, tabs, on, body, extra) {
     return '<section class="window w-' + kind + (extra ? ' ' + extra : '') + '" aria-label="' + name + '">' +

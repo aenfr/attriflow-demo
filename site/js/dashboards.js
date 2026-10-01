@@ -23,8 +23,8 @@
       '<div><p class="metric-label">Streams</p><p class="metric-value">' + num(m.streams) + '</p><ul class="mini-list">' +
       top.map(function (d) { return '<li><span>' + d.name + '</span><b>' + num(d.streams) + '</b></li>'; }).join('') +
       '<li class="muted"><span>4 more stores</span><b>' + num(m.streams - top.reduce(function (a, d) { return a + d.streams; }, 0)) + '</b></li></ul></div>' +
-      '<div><p class="metric-label">Net distribution revenue</p><p class="metric-value">' + usd(m.net) + '</p><p class="metric-sub">¼¢ per stream</p></div>' +
-      '<div><p class="metric-label">User share (' + (100 - m.pool) + '%)</p><p class="metric-value">' + usd(m.user) + '</p><p class="metric-sub">Paid directly to ' + T.user + '</p></div>' +
+      '<div><p class="metric-label">Net distribution revenue</p><p class="metric-value">' + usd(m.net) + '</p></div>' +
+      '<div><p class="metric-label">User share (' + (100 - m.pool) + '%)</p><p class="metric-value">' + usd(m.user) + '</p><p class="metric-sub">Paid directly to ' + T.user + ' by ' + T.distributor + '</p></div>' +
       '<div><p class="metric-label">AI influence royalty pool (' + m.pool + '%)</p><p class="metric-value">' + usd(m.poolAmt) + '</p><ul class="mini-list">' +
       '<li><span><i class="dot rh"></i>Rightsholders ' + s.rh + '%</span><b>' + usd(m.rhPool) + '</b></li>' +
       '<li><span><i class="dot dist"></i>Distributor Green Lane ' + s.dist + '%</span><b>' + usd(m.dist) + '</b></li>' +
@@ -55,10 +55,11 @@
     { track: 'Untitled 4471', artist: 'batch-uploader-22', ai: 'Fully AI', prov: 'No record found', bad: 'Mass-upload pattern', dsp: '0 of 8', d: 'red' }
   ];
   var POOL_TRACKS = [
-    { name: 'Neon Harbor', ai: 100 },
     { name: 'Midnight Lemonade', ai: AF.aiShare('now') },
+    { name: 'Neon Harbor', ai: 100 },
     { name: 'Paper Lanterns', ai: 32 }
   ];
+  var POOL_START = AF.poolFor(POOL_TRACKS[0].ai);
   V.distributor = {
     role: 'distributor',
     html: function () {
@@ -92,9 +93,9 @@
         '<p class="muted small">AttriFlow weighs the AI and human parts, then sets the pool as a share of net streaming revenue: 30% when mostly AI, down to 10% when mostly human.</p>' +
         '<div class="field"><label for="pool-track">Track</label><select id="pool-track">' +
         POOL_TRACKS.map(function (t, i) { return '<option value="' + i + '">' + t.name + ' (AI ' + t.ai + '%)</option>'; }).join('') + '</select></div>' +
-        '<div class="pool-meter big" role="meter" aria-valuemin="0" aria-valuemax="30" aria-valuenow="30" aria-label="AI influence pool" id="pool-meter"><i style="width:100%"></i></div>' +
+        '<div class="pool-meter big" role="meter" aria-valuemin="0" aria-valuemax="30" aria-valuenow="' + POOL_START + '" aria-label="AI influence pool" id="pool-meter"><i style="width:' + (POOL_START / 30 * 100) + '%"></i></div>' +
         '<div class="pool-ticks" aria-hidden="true"><span>10%</span><span>20%</span><span>30%</span></div>' +
-        '<p class="pool-readout" aria-live="polite">Pool <b id="pool-val">30%</b> of net streaming revenue · user keeps <b id="pool-user">70%</b></p>' +
+        '<p class="pool-readout" aria-live="polite">Pool <b id="pool-val">' + POOL_START + '%</b> of net streaming revenue · user keeps <b id="pool-user">' + (100 - POOL_START) + '%</b></p>' +
         '<p class="muted small" style="margin-top:12px">The pool is always paid out the same way:</p>' + AF.poolSplit(null, ['Rightsholders', 'Distributor Green Lane', 'AI platform', 'Fold']) + '</section>' +
         '<section class="card"><h3>' + icon('shield') + ' Policy engine</h3><p class="muted small">Each store’s AI rules, checked on every release.</p>' +
         '<ul class="status-list">' +
@@ -111,7 +112,7 @@
     },
     mount: function () {
       var sel = document.getElementById('pool-track'), meter = document.getElementById('pool-meter');
-      var current = 30;
+      var current = POOL_START;
       sel.addEventListener('change', function () {
         var target = AF.poolFor(POOL_TRACKS[+sel.value].ai);
         meter.querySelector('i').style.width = (target / 30 * 100) + '%';
@@ -166,7 +167,7 @@
         metrics([
           AF.metric('Works detected as influential', '214', 'in released AI songs', 'note'),
           AF.metric('AI generations attributed', '48,902', 'this month', 'flow'),
-          AF.metric('Released AI songs using your works', '1,377', null, 'store'),
+          AF.metric('Released AI songs influenced by your works', '1,377', null, 'store'),
           AF.metric('Influence royalties from streaming', '$6,812.40', 'accrued this month', 'cash')
         ]) +
         '<div class="grid2 wide-left">' +
@@ -178,7 +179,7 @@
         }).join('') + '</tbody></table></div></section>' +
         '<section class="card" id="work-detail" aria-live="polite">' + workDetail(WORKS[0]) + '</section></div>' +
         '<section class="card"><div class="card-head"><h3>From “' + T.title + '” this month</h3><span class="muted">' + usd(mine.amt) + ' · ' + mine.songs + ' of your songs influenced it</span></div>' +
-        '<p class="muted small">Paid by Fold from the song’s AI influence royalty pool, which rightsholders share 85%. You are one of the song’s ' + AF.RIGHTSHOLDERS + ' rightsholders.</p></section>' +
+        '<p class="muted small">Paid by Fold from the song’s AI influence royalty pool, which rightsholders share 85%. You are one of the song’s top 20 influencing rightsholders.</p></section>' +
         releaseStrip();
     },
     mount: function () {
@@ -225,12 +226,12 @@
         AF.statusRow('Opt-outs honoured', '1 song removed before training', 'neutral', 'x') +
         '</ul></section>' +
         '<section class="card"><h3>' + icon('flow') + ' ' + T.title + '</h3><p class="muted small">One of this month’s generations, as SongSpark made it.</p>' +
-        AF.partsList('created', false) + '</section></div>' +
+        AF.partsList('created', false, true) + '</section></div>' +
         releaseStrip();
     }
   };
 
-  // ---------- User ----------
+  // ---------- User: one track, as if Sam just opened Midnight Lemonade ----------
   V.user = {
     role: 'user',
     html: function () {
@@ -240,33 +241,37 @@
         ['shield', 'Verified by AttriFlow', 'Passport ' + T.id],
         ['mic', 'Your vocal added, song re-scored', 'AI share ' + m.shareThen + '% → ' + m.aiShare + '% · pool ' + m.poolThen + '% → ' + m.pool + '%'],
         ['upload', 'Distributed by ' + T.distributor, 'AI Green Lane · approved in 1 day'],
-        ['headphones', 'Streamed ' + num(m.streams) + ' times', '7 stores · ¼¢ per stream']
+        ['headphones', 'Streamed ' + num(m.streams) + ' times', '7 stores']
       ];
-      var flows = [
-        ['you', 'You, ' + (100 - m.pool) + '%', m.user],
-        ['rh', AF.RIGHTSHOLDERS + ' rightsholders · 85% of the pool', m.rhPool],
-        ['dist', T.distributor + ' · 5% of the pool', m.dist],
-        ['aip', 'SongSpark · 5% of the pool', m.ai],
-        ['fold', 'Fold · 5% of the pool', m.fold]
+      var pool = [
+        ['rh', AF.RIGHTSHOLDERS + ' rightsholders', '85%', m.rhPool],
+        ['dist', T.distributor, '5%', m.dist],
+        ['aip', 'SongSpark', '5%', m.ai],
+        ['fold', 'Fold', '5%', m.fold]
       ];
-      return dashHead('attri', T.user + ' · User', 'My music',
-          'My track was generated here, distributed here, streamed here, and this is how the money flowed.') +
+      var poolSum = m.rhPool + m.dist + m.ai + m.fold;
+      return '<header class="dash-head track-head">' + AF.cover(T) +
+        '<div><p class="card-eyebrow">My music › ' + T.title + '</p><h1 tabindex="-1">' + T.title + '</h1>' +
+        '<p class="muted">' + T.user + ' · made with SongSpark · released ' + 'through the AI Green Lane</p></div>' + AF.playBtn('main') + '</header>' +
         metrics([
-          AF.metric('Tracks created', '14', null, 'sparkles'),
-          AF.metric('Tracks distributed', '3', null, 'upload'),
-          AF.metric('Earnings this month', usd(m.user), (100 - m.pool) + '% of net streaming revenue', 'cash'),
-          AF.metric('AI influence royalty pool', usd(m.poolAmt), m.pool + '%, shared with those who influenced the AI parts', 'flow'),
-          AF.metric('Human contribution', (100 - m.aiShare) + '%', 'Re-scored at distribution · ' + (100 - m.shareThen) + '% at creation', 'user')
+          AF.metric('Streams this month', num(m.streams), '7 stores', 'headphones'),
+          AF.metric('Your earnings', usd(m.user), (100 - m.pool) + '% of net streaming revenue', 'cash'),
+          AF.metric('AI influence royalty pool', usd(m.poolAmt), m.pool + '% of net streaming revenue', 'flow'),
+          AF.metric('Human contribution', (100 - m.aiShare) + '%', 'Re-scored at distribution · ' + (100 - m.shareThen) + '% at creation', 'user'),
+          AF.metric('Stores', '7 of 8', 'Store X reviews by hand', 'store')
         ]) +
-        '<div class="grid2 wide-left"><section class="card"><h3>' + T.title + ': the whole story</h3><ol class="timeline">' +
-        steps.map(function (s) { return '<li><span class="tl-ico">' + icon(s[0]) + '</span><div><b>' + s[1] + '</b><span class="muted">' + s[2] + '</span></div></li>'; }).join('') +
+        '<div class="grid2 wide-left"><section class="card"><h3>The story so far</h3><ol class="timeline">' +
+        steps.map(function (x) { return '<li><span class="tl-ico">' + icon(x[0]) + '</span><div><b>' + x[1] + '</b><span class="muted">' + x[2] + '</span></div></li>'; }).join('') +
         '</ol></section>' +
         '<section class="card"><h3>' + icon('cash') + ' How the money flowed</h3><p class="muted small">Net streaming revenue this month: <b>' + usd(m.net) + '</b></p>' +
-        '<ul class="split-legend">' + flows.map(function (f) {
-          return '<li><span class="dot ' + f[0] + '"></span><span class="lg-name">' + f[1] + '</span><span></span><span class="lg-amt">' + usd(f[2]) + '</span></li>';
+        '<div class="outside-pool"><span class="dot you"></span><div><b>You · ' + (100 - m.pool) + '% · ' + usd(m.user) + '</b>' +
+        '<small>Paid to you directly by ' + T.distributor + '. Not part of the pool.</small></div></div>' +
+        '<h4 class="pool-h">AI influence royalty pool · ' + m.pool + '% · ' + usd(m.poolAmt) + '</h4>' +
+        '<ul class="split-legend">' + pool.map(function (f) {
+          return '<li><span class="dot ' + f[0] + '"></span><span class="lg-name">' + f[1] + '</span><b>' + f[2] + '</b><span class="lg-amt">' + usd(f[3]) + '</span></li>';
         }).join('') + '</ul>' +
-        '<div class="sum small">' + flows.map(function (f) { return usd(f[2]); }).join(' + ') + ' = ' + usd(m.counted) + ' ' +
-        (m.counted === m.net ? icon('check', 'ok') : icon('alert', 'warn')) + '</div></section></div>' +
+        '<div class="sum small">' + pool.map(function (f) { return usd(f[3]); }).join(' + ') + ' = ' + usd(poolSum) + ' ' +
+        (poolSum === m.poolAmt ? icon('check', 'ok') : icon('alert', 'warn')) + '</div></section></div>' +
         '<section class="card"><h3>Store status</h3>' + AF.dspGrid() + '</section>' +
         releaseStrip();
     }
@@ -317,9 +322,11 @@
         }).join('') + '</ol>' +
         '<div class="sum small">Received ' + usd(m.toFold) + ' = ' + usd(m.rhPool) + ' + ' + usd(m.ai) + ' + ' + usd(m.fold) + ' ' +
         (check === m.toFold ? icon('check', 'ok') : icon('alert', 'warn')) + '</div></section>' +
-        '<section class="card"><div class="card-head"><h3>Payouts for ' + T.title + '</h3><span class="muted">Scheduled 1 Nov 2026</span></div>' +
-        AF.payeeTable(m) +
-        '<ul class="mini-list" style="margin-top:10px"><li><span>SongSpark · AI platform</span><b>' + usd(m.ai) + '</b></li><li><span>Fold · kept</span><b>' + usd(m.fold) + '</b></li></ul></section></div>' +
+        '<section class="card"><h3>' + icon('users') + ' Rightsholders by share</h3>' + AF.payeeTable(m) + '</section></div>' +
+        '<section class="card"><div class="card-head"><h3>Payouts for ' + T.title + '</h3><span class="muted">' + AF.CATALOG.length + ' songs · each split 50/50 publishing and recording · scheduled 1 Nov 2026</span></div>' +
+        AF.songTable(m, true) +
+        '<ul class="mini-list" style="margin-top:12px"><li><span>Rightsholders, ' + AF.RIGHTSHOLDERS + ' in total</span><b>' + usd(m.rhPool) + '</b></li>' +
+        '<li><span>SongSpark · AI platform</span><b>' + usd(m.ai) + '</b></li><li><span>Fold · kept</span><b>' + usd(m.fold) + '</b></li></ul></section>' +
         releaseStrip();
     }
   };

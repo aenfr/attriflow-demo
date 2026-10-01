@@ -116,7 +116,19 @@
   });
   document.addEventListener('click', function (e) {
     var p = e.target.closest('[data-play]');
-    if (p) AF.Player.toggle(p.getAttribute('data-play'));
+    if (p) { AF.Player.toggle(p.getAttribute('data-play')); return; }
+    var info = e.target.closest('[data-info]');
+    if (info) {
+      var pop = info.closest('.cocreate').querySelector('.info-pop');
+      pop.hidden = !pop.hidden;
+      info.setAttribute('aria-expanded', pop.hidden ? 'false' : 'true');
+      return;
+    }
+    if (e.target.closest('[data-method]')) {
+      e.preventDefault();
+      AF.modal(AF.methodHtml(), { wide: true });
+      document.getElementById('m-close').addEventListener('click', AF.closeModal);
+    }
   });
   window.addEventListener('hashchange', function () { render(false); });
   render(false);

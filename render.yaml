@@ -4,6 +4,10 @@ services:
     runtime: static
     buildCommand: echo "static site, nothing to build"
     staticPublishPath: ./site
+    routes:
+      - type: redirect
+        source: /v1
+        destination: /v1/
     headers:
       - path: /*
         name: Cache-Control

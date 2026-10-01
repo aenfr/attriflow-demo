@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AttriFlow</title>
+  <meta name="description" content="Follow one AI song from idea to paycheck, and see how its money is shared with the artists who inspired it.">
+  <meta name="color-scheme" content="light">
+  <link rel="stylesheet" href="styles.css?v=9">
+</head>
+<body>
+  <a class="skip" href="#view">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="AttriFlow by Fold Artists, home">
+      <span class="brand-mark" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2.5"/><path d="M7.5 12c4.5 0 4.5-6.5 9-6.5M7.5 12h9M7.5 12c4.5 0 4.5 6.5 9 6.5"/><circle cx="19" cy="5.5" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="18.5" r="1.6" fill="currentColor"/></svg></span>
+      <span class="brand-text">
+        <span class="brand-name">AttriFlow</span>
+        <span class="brand-by">by <img src="assets/fold-artists-logo.png" alt="Fold Artists" width="96" height="11"></span>
+      </span>
+    </a>
+    <button class="btn btn-quiet" id="reset" type="button">Start over</button>
+  </header>
+
+  <nav class="steps" id="steps" aria-label="Journey steps"></nav>
+
+  <main id="view" tabindex="-1"></main>
+
+  <footer class="navbar" id="navbar">
+    <button class="btn btn-secondary" id="back" type="button">← Back</button>
+    <p class="nav-hint" id="hint" aria-live="polite"></p>
+    <button class="btn btn-primary" id="next" type="button">Next →</button>
+  </footer>
+
+  <p class="demo-note">Demo: pretend songs, pretend money.</p>
+
+  <script src="app.js?v=9"></script>
+</body>
+</html>

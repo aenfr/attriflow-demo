@@ -11,13 +11,21 @@ back to the artists who inspired it.
 
 The apps, artists and money are pretend. The song is a real 30-second AI generation.
 
+## Two versions
+
+- **v1** (`/`): the simple five-step story above.
+- **v2** (`/v2/`): a fuller product story. An eight-step track journey runs from training data
+  to royalties: Train, Create, Verify, Passport, Submit, Green Lane, Stream, Pay. It also has
+  stakeholder dashboards with a "View as" switcher: Creator, AI Platform, Distributor and
+  Rightsholder.
+
 ## Run it locally
 
 ```bash
 python -m http.server 8191 -d site
 ```
 
-Then open http://localhost:8191. No build step and no internet needed.
+Then open http://localhost:8191 (v1) or http://localhost:8191/v2/ (v2). No build step and no internet needed.
 
 ## Deploy
 

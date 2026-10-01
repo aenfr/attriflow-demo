@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AttriFlow</title>
+  <meta name="description" content="AttriFlow by Fold Artists: follow one AI-assisted song from training data to royalties, and see what each stakeholder sees.">
+  <meta name="color-scheme" content="light">
+  <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+  <a class="skip" href="#view">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="AttriFlow by Fold Artists, home">
+      <span class="brand-mark" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2.5"/><path d="M7.5 12c4.5 0 4.5-6.5 9-6.5M7.5 12h9M7.5 12c4.5 0 4.5 6.5 9 6.5"/><circle cx="19" cy="5.5" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="18.5" r="1.6" fill="currentColor"/></svg></span>
+      <span class="brand-text">
+        <span class="brand-name">AttriFlow</span>
+        <span class="brand-by">by <img src="assets/fold-artists-logo.png" alt="Fold Artists" width="96" height="11"></span>
+      </span>
+    </a>
+    <nav class="modes" aria-label="Sections">
+      <a id="mode-journey" href="#/train">Track journey</a>
+      <a id="mode-dash" href="#/dash/distributor">Dashboards</a>
+    </nav>
+    <div class="top-right">
+      <label class="viewas"><span>View as</span>
+        <select id="role">
+          <option value="">Choose a role</option>
+          <option value="creator">Creator</option>
+          <option value="platform">AI Platform</option>
+          <option value="distributor">Distributor</option>
+          <option value="rightsholder">Rightsholder</option>
+        </select>
+      </label>
+      <button class="btn btn-quiet" id="reset" type="button">Start over</button>
+    </div>
+  </header>
+
+  <nav class="steps" id="steps" aria-label="Track journey steps" hidden></nav>
+
+  <main id="view" tabindex="-1"></main>
+
+  <footer class="navbar" id="navbar" hidden>
+    <button class="btn btn-secondary" id="back" type="button">← Back</button>
+    <p class="nav-hint" id="hint" aria-live="polite"></p>
+    <button class="btn btn-primary" id="next" type="button">Next →</button>
+  </footer>
+
+  <p class="demo-note">Demo: pretend apps, artists and money. All numbers are illustrative.</p>
+
+  <div id="modal" class="modal" hidden></div>
+
+  <script src="js/core.js?v=1"></script>
+  <script src="js/journey.js?v=1"></script>
+  <script src="js/dashboards.js?v=1"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>

@@ -7,9 +7,10 @@
   // ---------- the story (all illustrative) ----------
   AF.TRACK = {
     title: 'Midnight Lemonade',
-    creator: 'Sam Rivera',
+    user: 'Sam Rivera',
     platform: 'SongSpark',
     tier: 'Plus',
+    distributor: 'DropTune Distribution Company',
     id: 'SSK-2026-7Q4M-1087',
     created: '1 Oct 2026, 14:32 UTC',
     createdShort: '1 Oct 2026',
@@ -22,56 +23,86 @@
     fileSize: '5.3 MB',
     stems: 'Midnight Lemonade - stems.zip',
     stemsSize: '21.8 MB',
+    finalFile: 'Midnight Lemonade - final mix.wav',
+    finalSize: '5.4 MB',
     cover: 'linear-gradient(135deg,#ff3d7f,#ffb347)',
     art: 'lemon',
     audio: 'audio/midnight-lemonade.mp3?v=4'
   };
 
-  // What is AI and what is human inside the track. Weights add up to 1.
+  // What is AI and what is human inside the track, at creation (ai) and when it reaches the distributor (aiNow).
+  // Weights add up to 1. After downloading, the user recorded their own vocal over the song.
   AF.PARTS = [
-    { name: 'Composition', kind: 'mix', ai: 75, weight: 0.4, label: 'AI 75% · Human 25%' },
-    { name: 'Vocals', kind: 'ai', ai: 100, weight: 0.2, label: 'AI-generated' },
-    { name: 'Lead guitar', kind: 'ai', ai: 100, weight: 0.15, label: 'AI-generated' },
-    { name: 'Percussion', kind: 'human', ai: 0, weight: 0.15, label: 'Human-uploaded' },
-    { name: 'Production', kind: 'assist', ai: 60, weight: 0.1, label: 'AI-assisted' }
+    { name: 'Composition', kind: 'mix', ai: 75, aiNow: 75, weight: 0.4, label: 'AI 75% · Human 25%' },
+    { name: 'Vocals', kind: 'ai', ai: 100, aiNow: 0, weight: 0.2, label: 'AI-generated', kindNow: 'human', labelNow: 'Human vocal, added later' },
+    { name: 'Lead guitar', kind: 'ai', ai: 100, aiNow: 100, weight: 0.15, label: 'AI-generated' },
+    { name: 'Percussion', kind: 'human', ai: 0, aiNow: 0, weight: 0.15, label: 'Human-uploaded' },
+    { name: 'Production', kind: 'assist', ai: 60, aiNow: 60, weight: 0.1, label: 'AI-assisted' }
   ];
-  AF.aiShare = function (parts) {
-    return Math.round((parts || AF.PARTS).reduce(function (s, p) { return s + p.ai * p.weight; }, 0));
+  AF.aiShare = function (when) {
+    var key = when === 'now' ? 'aiNow' : 'ai';
+    return Math.round(AF.PARTS.reduce(function (s, p) { return s + p[key] * p.weight; }, 0));
   };
 
-  // The AI influence royalty pool shrinks as the human share grows (the rule the Letter of Direction accepts).
-  AF.POOLS = {
-    30: { rh: 15, dist: 10, ai: 3, fold: 2 },
-    20: { rh: 10, dist: 7, ai: 2, fold: 1 },
-    10: { rh: 5, dist: 3, ai: 1, fold: 1 }
-  };
+  // The AI influence royalty pool is at most 30% of net streaming revenue, and shrinks as more of the song is human.
   AF.poolFor = function (aiShare) { return aiShare >= 70 ? 30 : aiShare >= 40 ? 20 : 10; };
+  // How the pool itself is paid out (percent of the pool).
+  AF.POOL_SPLIT = { rh: 85, dist: 5, ai: 5, fold: 5 };
 
-  // The licensed catalog that trained the model, with the influence LUMINA found in this track.
-  AF.CATALOG = [
-    { id: 'mara', song: 'Sunny Days', artist: 'Mara Vale', pct: 40, writer: 'Mara Vale', writerCo: 'Brightleaf Songs',
-      owner: 'Lighthouse Lane Records', art: 'sun', cover: 'linear-gradient(135deg,#ffd166,#ff8a3c)' },
-    { id: 'puddles', song: 'Blue Window', artist: 'The Velvet Puddles', pct: 30, writer: 'Nina Ortiz', writerCo: 'Northstar Songs',
-      owner: 'Tidewater Tunes', art: 'window', cover: 'linear-gradient(135deg,#4f7cff,#7fd3ff)' },
-    { id: 'rico', song: 'Paper Moon', artist: 'Rico Sands', pct: 20, writer: 'Rico Sands', writerCo: 'Copper Kite Music',
-      owner: 'Sundial Sound', art: 'moon', cover: 'linear-gradient(135deg,#3a2f6b,#9b7bff)' },
-    { id: 'juno', song: 'Late Bus', artist: 'Juno Wilder', pct: 10, writer: 'Juno Wilder', writerCo: 'Maple Lane Songs',
-      owner: 'Juno Wilder', art: 'bus', cover: 'linear-gradient(135deg,#1fb58f,#c6f36b)' }
+  // The licensed songs LUMINA found influencing the AI parts of this track: 20 songs from 10 rightsholders.
+  // Each song pays two rightsholders: its publisher (songwriting) and its label (recording).
+  AF.HOLDERS = [
+    { name: 'Brightleaf Songs', side: 'Songwriting' }, { name: 'Northstar Songs', side: 'Songwriting' },
+    { name: 'Copper Kite Music', side: 'Songwriting' }, { name: 'Maple Lane Songs', side: 'Songwriting' },
+    { name: 'Saltmarsh Publishing', side: 'Songwriting' },
+    { name: 'Lighthouse Lane Records', side: 'Recording' }, { name: 'Tidewater Tunes', side: 'Recording' },
+    { name: 'Sundial Sound', side: 'Recording' }, { name: 'Ember & Oak Records', side: 'Recording' },
+    { name: 'Kestrel Records', side: 'Recording' }
   ];
+  function song(id, title, artist, pct, publisher, label, art, cover) {
+    return { id: id, song: title, artist: artist, pct: pct, publisher: publisher, label: label, art: art || 'note',
+      cover: cover || 'linear-gradient(135deg,#8b93a7,#c5cad6)' };
+  }
+  AF.CATALOG = [
+    song('mara', 'Sunny Days', 'Mara Vale', 18, 'Brightleaf Songs', 'Lighthouse Lane Records', 'sun', 'linear-gradient(135deg,#ffd166,#ff8a3c)'),
+    song('puddles', 'Blue Window', 'The Velvet Puddles', 14, 'Northstar Songs', 'Tidewater Tunes', 'window', 'linear-gradient(135deg,#4f7cff,#7fd3ff)'),
+    song('rico', 'Paper Moon', 'Rico Sands', 11, 'Copper Kite Music', 'Sundial Sound', 'moon', 'linear-gradient(135deg,#3a2f6b,#9b7bff)'),
+    song('juno', 'Late Bus', 'Juno Wilder', 9, 'Maple Lane Songs', 'Ember & Oak Records', 'bus', 'linear-gradient(135deg,#1fb58f,#c6f36b)'),
+    song('ada', 'Glass Orchard', 'Ada Quill', 8, 'Saltmarsh Publishing', 'Kestrel Records', 'note', 'linear-gradient(135deg,#0f766e,#5eead4)'),
+    song('s6', 'Saltwater Radio', 'Mara Vale', 5, 'Brightleaf Songs', 'Lighthouse Lane Records', 'note', 'linear-gradient(135deg,#f59e0b,#fcd34d)'),
+    song('s7', 'Hollow Pines', 'The Hollow Pines', 4, 'Northstar Songs', 'Ember & Oak Records', 'note', 'linear-gradient(135deg,#166534,#86efac)'),
+    song('s8', 'Copper Sky', 'Ines Arroyo', 4, 'Copper Kite Music', 'Sundial Sound', 'note', 'linear-gradient(135deg,#b45309,#fdba74)'),
+    song('s9', 'Northbound', 'The Hollow Pines', 3, 'Northstar Songs', 'Ember & Oak Records'),
+    song('s10', 'Lantern Road', 'Remy Oduya', 3, 'Maple Lane Songs', 'Tidewater Tunes'),
+    song('s11', 'Kite Season', 'Juno Wilder', 3, 'Maple Lane Songs', 'Kestrel Records'),
+    song('s12', 'Ghost Radio', 'Ines Arroyo', 3, 'Copper Kite Music', 'Sundial Sound'),
+    song('s13', 'Salt & Honey', 'Mara Vale', 2, 'Brightleaf Songs', 'Lighthouse Lane Records'),
+    song('s14', 'Winter Arcade', 'Lio Banks', 2, 'Saltmarsh Publishing', 'Kestrel Records'),
+    song('s15', 'Blue Hour', 'The Velvet Puddles', 2, 'Northstar Songs', 'Tidewater Tunes'),
+    song('s16', 'Orchard Lights', 'Ada Quill', 2, 'Saltmarsh Publishing', 'Kestrel Records'),
+    song('s17', 'Small Hours', 'Remy Oduya', 2, 'Maple Lane Songs', 'Tidewater Tunes'),
+    song('s18', 'Paper Planes Home', 'Rico Sands', 2, 'Copper Kite Music', 'Sundial Sound'),
+    song('s19', 'Sundown Ferry', 'Lio Banks', 2, 'Saltmarsh Publishing', 'Ember & Oak Records'),
+    song('s20', 'Little Thunder', 'Nina Ortiz', 1, 'Brightleaf Songs', 'Lighthouse Lane Records')
+  ];
+  AF.TOP = 5; // songs shown with full detail; the rest sit behind "show all"
+  AF.RIGHTSHOLDERS = AF.HOLDERS.length;
   AF.OPTED_OUT = { song: 'Harbor Lights', artist: 'Ellis Crane', art: 'note', cover: 'linear-gradient(135deg,#9aa0ad,#c9ccd4)' };
 
-  // Stores: eligibility from the Green Lane decision, streams for one month, illustrative cents per stream.
+  // Stores: eligibility from the Green Lane decision and streams for one month.
+  // The recording side earns a quarter of a cent per stream.
+  AF.CENTS_PER_STREAM = 0.25;
   AF.DSPS = [
-    { name: 'Spotify', ok: true, streams: 184211, cents: 0.4 },
-    { name: 'Apple Music', ok: true, streams: 42105, cents: 0.7 },
-    { name: 'YouTube Music', ok: true, streams: 91882, cents: 0.2 },
-    { name: 'Amazon Music', ok: true, streams: 18406, cents: 0.4 },
-    { name: 'TikTok', ok: true, streams: 9730, cents: 0.1 },
-    { name: 'Deezer', ok: true, streams: 6215, cents: 0.3 },
-    { name: 'Tidal', ok: true, streams: 2947, cents: 1.0 },
-    { name: 'Store X', ok: false, streams: 0, cents: 0 }
+    { name: 'Spotify', ok: true, streams: 184211 },
+    { name: 'Apple Music', ok: true, streams: 42105 },
+    { name: 'YouTube Music', ok: true, streams: 91882 },
+    { name: 'Amazon Music', ok: true, streams: 18406 },
+    { name: 'TikTok', ok: true, streams: 9730 },
+    { name: 'Deezer', ok: true, streams: 6215 },
+    { name: 'Tidal', ok: true, streams: 2947 },
+    { name: 'Store X', ok: false, streams: 0 }
   ];
-  AF.GREEN_LANE_FEE = 499; // cents, illustrative
+  AF.GREEN_LANE_FEE = 499; // cents, illustrative, paid once at release
 
   // ---------- money (integer cents, always computed) ----------
   function add(a, b) { return a + b; }
@@ -88,19 +119,28 @@
     return base;
   };
   AF.money = function () {
-    var gross = AF.DSPS.reduce(function (s, d) { return s + Math.round(d.streams * d.cents); }, 0);
-    var share = AF.aiShare();
-    var pool = AF.poolFor(share), p = AF.POOLS[pool];
-    var parts = AF.allocate(gross, [100 - pool, p.rh, p.dist, p.ai, p.fold]);
-    var rh = AF.allocate(parts[1], AF.CATALOG.map(function (c) { return c.pct; })).map(function (amt, i) {
+    var streams = AF.DSPS.reduce(function (s, d) { return s + d.streams; }, 0);
+    var net = Math.round(streams * AF.CENTS_PER_STREAM);
+    var shareThen = AF.aiShare('created'), shareNow = AF.aiShare('now');
+    var poolThen = AF.poolFor(shareThen), pool = AF.poolFor(shareNow), s = AF.POOL_SPLIT;
+    var top = AF.allocate(net, [100 - pool, pool]);
+    var parts = AF.allocate(top[1], [s.rh, s.dist, s.ai, s.fold]);
+    var rh = AF.allocate(parts[0], AF.CATALOG.map(function (c) { return c.pct; })).map(function (amt, i) {
       var halves = AF.allocate(amt, [1, 1]);
       return Object.assign({}, AF.CATALOG[i], { amt: amt, write: halves[0], rec: halves[1] });
     });
-    var streams = AF.DSPS.reduce(function (s, d) { return s + d.streams; }, 0);
+    // Roll the per-song halves up to the 10 rightsholders.
+    var payees = AF.HOLDERS.map(function (h) {
+      var songs = rh.filter(function (r) { return h.side === 'Songwriting' ? r.publisher === h.name : r.label === h.name; });
+      return { name: h.name, side: h.side, songs: songs.length, amt: songs.reduce(function (s2, r) { return s2 + (h.side === 'Songwriting' ? r.write : r.rec); }, 0) };
+    });
     return {
-      gross: gross, streams: streams, aiShare: share, pool: pool, p: p,
-      user: parts[0], rhPool: parts[1], dist: parts[2], ai: parts[3], fold: parts[4], rh: rh,
-      counted: parts.reduce(add, 0)
+      streams: streams, net: net,
+      shareThen: shareThen, aiShare: shareNow, poolThen: poolThen, pool: pool,
+      user: top[0], poolAmt: top[1],
+      rhPool: parts[0], dist: parts[1], ai: parts[2], fold: parts[3], rh: rh, payees: payees,
+      toFold: top[1] - parts[1],
+      counted: top[0] + parts.reduce(add, 0)
     };
   };
   AF.usd = function (c) {
@@ -115,7 +155,7 @@
   };
 
   // ---------- state ----------
-  var KEY = 'attriflow-v2';
+  var KEY = 'attriflow-v2b';
   AF.DEFAULTS = { generated: false, signed: false, prepared: false, downloaded: false, analyzed: false,
     approved: false, declined: false, streamed: false };
   AF.state = (function () {
@@ -247,7 +287,8 @@
       mara: { root: 62, scale: MAJOR, bpm: 124, seed: 3, prog: [0, 3, 4, 3], lead: 'triangle' },
       puddles: { root: 57, scale: MINOR, bpm: 86, seed: 11, prog: [0, 5, 2, 6], lead: 'sine' },
       rico: { root: 55, scale: MAJOR, bpm: 96, seed: 5, prog: [0, 5, 3, 4], lead: 'triangle' },
-      juno: { root: 64, scale: MINOR, bpm: 104, seed: 9, prog: [0, 6, 5, 4], lead: 'sawtooth' }
+      juno: { root: 64, scale: MINOR, bpm: 104, seed: 9, prog: [0, 6, 5, 4], lead: 'sawtooth' },
+      ada: { root: 59, scale: MINOR, bpm: 92, seed: 13, prog: [0, 3, 5, 4], lead: 'triangle' }
     };
     var ctx = null, master = null, noise = null, timer = null;
     var current = null, def = null, mel = null, step = 0, nextTime = 0;
@@ -501,19 +542,25 @@
   AF.partIcon = function (name) {
     return { Composition: 'note', Vocals: 'mic', 'Lead guitar': 'guitar', Percussion: 'drum', Production: 'sliders' }[name] || 'note';
   };
-  AF.splitBar = function (m, compact) {
-    var rows = [
-      ['you', 'Creator', 100 - m.pool, m.user],
-      ['rh', 'Rightsholders (AI influence)', m.p.rh, m.rhPool],
-      ['dist', 'Distributor Green Lane', m.p.dist, m.dist],
-      ['aip', 'AI platform', m.p.ai, m.ai],
-      ['fold', 'Fold (AttriFlow)', m.p.fold, m.fold]
-    ];
+  // Net streaming revenue: the user's share and the AI influence royalty pool.
+  AF.netSplit = function (m) {
+    return '<div class="split"><div class="split-track" role="img" aria-label="User ' + (100 - m.pool) + '%, AI influence royalty pool ' + m.pool + '%">' +
+      '<span class="seg you" style="flex:' + (100 - m.pool) + '"></span><span class="seg pool" style="flex:' + m.pool + '"></span></div>' +
+      '<ul class="split-legend">' +
+      '<li><span class="dot you"></span><span class="lg-name">User · ' + AF.TRACK.user + '</span><b>' + (100 - m.pool) + '%</b><span class="lg-amt">' + AF.usd(m.user) + '</span></li>' +
+      '<li><span class="dot pool"></span><span class="lg-name">AI influence royalty pool</span><b>' + m.pool + '%</b><span class="lg-amt">' + AF.usd(m.poolAmt) + '</span></li>' +
+      '</ul></div>';
+  };
+  // The pool, paid out 85 / 5 / 5 / 5. Pass m for amounts, or nothing for percentages only.
+  AF.poolSplit = function (m, labels) {
+    var s = AF.POOL_SPLIT;
+    labels = labels || ['Rightsholders who influenced the AI parts', AF.TRACK.distributor + ' · Green Lane', 'SongSpark · AI platform', 'Fold · AttriFlow'];
+    var rows = [['rh', labels[0], s.rh, m && m.rhPool], ['dist', labels[1], s.dist, m && m.dist], ['aip', labels[2], s.ai, m && m.ai], ['fold', labels[3], s.fold, m && m.fold]];
     return '<div class="split"><div class="split-track" role="img" aria-label="' + rows.map(function (r) { return r[1] + ' ' + r[2] + '%'; }).join(', ') + '">' +
       rows.map(function (r) { return '<span class="seg ' + r[0] + '" style="flex:' + r[2] + '"></span>'; }).join('') + '</div>' +
-      '<ul class="split-legend' + (compact ? ' compact' : '') + '">' + rows.map(function (r) {
+      '<ul class="split-legend' + (m ? '' : ' compact') + '">' + rows.map(function (r) {
         return '<li><span class="dot ' + r[0] + '"></span><span class="lg-name">' + r[1] + '</span><b>' + r[2] + '%</b>' +
-          (compact ? '' : '<span class="lg-amt">' + AF.usd(r[3]) + '</span>') + '</li>';
+          (m ? '<span class="lg-amt">' + AF.usd(r[3]) + '</span>' : '') + '</li>';
       }).join('') + '</ul></div>';
   };
 })();

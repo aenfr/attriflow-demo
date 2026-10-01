@@ -50,7 +50,7 @@
     navbar.hidden = false;
     var id = AF.SCENES[idx].id, ok = AF.GATES[id](), h = AF.HINTS[id];
     nextBtn.disabled = !ok;
-    nextBtn.innerHTML = id === 'pay' ? 'Dashboards →' : 'Next →';
+    nextBtn.innerHTML = id === 'pay' ? 'My dashboard →' : 'Next →';
     hint.textContent = ok ? h[1] : h[0];
   }
 
@@ -106,7 +106,7 @@
   nextBtn.addEventListener('click', function () {
     var idx = sceneIndex(route.name);
     if (idx < 0 || !AF.GATES[AF.SCENES[idx].id]()) return;
-    go(idx < AF.SCENES.length - 1 ? AF.SCENES[idx + 1].id : 'dash/distributor');
+    go(idx < AF.SCENES.length - 1 ? AF.SCENES[idx + 1].id : 'dash/user');
   });
   roleSel.addEventListener('change', function () { if (roleSel.value) go('dash/' + roleSel.value); });
   document.getElementById('reset').addEventListener('click', function () {

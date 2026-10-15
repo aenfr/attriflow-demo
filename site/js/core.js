@@ -14,11 +14,12 @@
     id: 'SSK-2026-7Q4M-1087',
     created: '1 Oct 2026, 14:32 UTC',
     createdShort: '1 Oct 2026',
-    prompt: 'a happy folk song with fingerpicked guitar, a dancing beat, sparkly synths and a female voice',
+    prompt: 'a happy folk song built around my vocal, with fingerpicked guitar, a dancing beat and sparkly synths',
     bpm: 122,
     key: 'C major',
     length: '0:30',
-    upload: 'my-cajon-groove.wav',
+    upload: 'Sam Rivera - Midnight Lemonade lead vocal.wav',
+    uploadSize: '4.6 MB',
     file: 'Midnight Lemonade.wav',
     fileSize: '5.3 MB',
     stems: 'Midnight Lemonade - stems.zip',
@@ -30,18 +31,26 @@
     audio: 'audio/midnight-lemonade.mp3?v=4'
   };
 
-  // What is AI and what is human inside the track, at creation (ai) and when it reaches the distributor (aiNow).
-  // Weights add up to 1. After downloading, the user recorded their own vocal over the song.
+  // What is AI and what is human inside the track: at SongSpark (ai) and when AttriFlow re-scores it at the
+  // distributor (aiNow). Weights add up to 1. Sam uploads their own lead vocal as the audio reference, and the
+  // AI makes the rest; the distributor re-score finds the same mix, so the pool is re-confirmed.
   AF.PARTS = [
     { name: 'Composition', kind: 'mix', ai: 75, aiNow: 75, weight: 0.4, label: 'AI 75% · Human 25%' },
-    { name: 'Vocals', kind: 'ai', ai: 100, aiNow: 0, weight: 0.2, label: 'AI-generated', kindNow: 'human', labelNow: 'Human vocal, added later' },
+    { name: 'Vocals', kind: 'human', ai: 0, aiNow: 0, weight: 0.2, label: 'Your vocal, uploaded' },
     { name: 'Lead guitar', kind: 'ai', ai: 100, aiNow: 100, weight: 0.15, label: 'AI-generated' },
-    { name: 'Percussion', kind: 'human', ai: 0, aiNow: 0, weight: 0.15, label: 'Human-uploaded' },
+    { name: 'Percussion', kind: 'ai', ai: 100, aiNow: 100, weight: 0.15, label: 'AI-generated' },
     { name: 'Production', kind: 'assist', ai: 60, aiNow: 60, weight: 0.1, label: 'AI-assisted' }
   ];
   AF.aiShare = function (when) {
     var key = when === 'now' ? 'aiNow' : 'ai';
     return Math.round(AF.PARTS.reduce(function (s, p) { return s + p[key] * p.weight; }, 0));
+  };
+  // The recording on its own (every part except the composition), weighted the same way.
+  AF.recordingShare = function (when) {
+    var key = when === 'now' ? 'aiNow' : 'ai';
+    var rec = AF.PARTS.filter(function (p) { return p.name !== 'Composition'; });
+    var w = rec.reduce(function (s, p) { return s + p.weight; }, 0);
+    return Math.round(rec.reduce(function (s, p) { return s + p[key] * p.weight; }, 0) / w);
   };
 
   // The AI influence royalty pool is at most 30% of net streaming revenue, and shrinks as more of the song is human.
@@ -155,9 +164,9 @@
   };
 
   // ---------- state ----------
-  var KEY = 'attriflow-v2b';
-  AF.DEFAULTS = { generated: false, signed: false, prepared: false, downloaded: false, analyzed: false,
-    approved: false, declined: false, streamed: false };
+  var KEY = 'attriflow-v2c';
+  AF.DEFAULTS = { refUploaded: false, generated: false, signed: false, prepared: false, downloaded: false,
+    songUploaded: false, analyzed: false, approved: false, declined: false, streamed: false };
   AF.state = (function () {
     try {
       var s = JSON.parse(localStorage.getItem(KEY));
@@ -169,6 +178,19 @@
   AF.reset = function () {
     AF.state = Object.assign({}, AF.DEFAULTS);
     try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+  };
+  // What each journey step records. Replaying a step clears only its own flags, so later
+  // progress is kept and the presenter can show one step again without starting over.
+  AF.SCENE_FLAGS = {
+    create: ['refUploaded', 'generated'],
+    verify: ['signed', 'prepared', 'downloaded'],
+    submit: ['songUploaded', 'analyzed'],
+    greenlane: ['approved', 'declined'],
+    stream: ['streamed']
+  };
+  AF.resetScene = function (id) {
+    (AF.SCENE_FLAGS[id] || []).forEach(function (k) { AF.state[k] = AF.DEFAULTS[k]; });
+    AF.save();
   };
 
   // ---------- timing ----------
@@ -195,6 +217,7 @@
     sparkles: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4M5 17v4M3 19h4"/>',
     check: '<path d="M20 6L9 17l-5-5"/>',
     x: '<path d="M18 6L6 18M6 6l12 12"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
     alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
     shield: '<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
     lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
@@ -499,8 +522,12 @@
     root.innerHTML = '<div class="modal-card' + (opts.wide ? ' wide' : '') + '" role="dialog" aria-modal="true" aria-labelledby="modal-title">' + html + '</div>';
     root.hidden = false;
     document.body.classList.add('modal-open');
+    // Long modals (the analysis) put their confirm button at the bottom: focus it without
+    // letting the browser scroll there, so the modal always opens showing its top.
     var first = root.querySelector('[data-autofocus]') || root.querySelector('button, [href], input');
-    if (first) first.focus();
+    if (first) first.focus({ preventScroll: true });
+    root.scrollTop = 0;
+    root.firstChild.scrollTop = 0;
     return root;
   };
   AF.closeModal = function () {
@@ -527,8 +554,8 @@
       [[30, '70% AI or more'], [20, '40% to 70% AI'], [10, 'under 40% AI']].map(function (t) {
         return '<div class="tier"><b>' + t[0] + '%</b><span>' + t[1] + '</span></div>';
       }).join('') + '</div><p class="muted small">The pool is the share of net streaming revenue that goes to those who influenced the AI parts. The user keeps the rest.</p></section>' +
-      '<section><h3>3. It is checked again at distribution</h3><p class="muted small">When the song reaches a distributor, AttriFlow compares what it hears with the fingerprint recorded at creation. ' +
-      'Parts changed after download, such as a newly recorded human vocal, are re-scored, and the pool follows. The Letter of Direction sets the order: fingerprint record first, then the latest detection.</p></section>' +
+      '<section><h3>3. It is checked again at distribution</h3><p class="muted small">When the song reaches a distributor, AttriFlow compares what it hears with the gradient signature and AI Profile recorded at SongSpark. ' +
+      'Parts changed after download, such as a newly recorded part, are re-scored, and the pool follows. The Letter of Direction sets the order: SongSpark record first, then the latest detection.</p></section>' +
       '</div><div class="modal-actions"><button type="button" class="btn btn-primary" id="m-close" data-autofocus>Got it</button></div>';
   };
 
@@ -541,13 +568,19 @@
       }).join('') + '</div></div>' +
       '<div class="window-body">' + body + '</div></section>';
   };
+  // The step's explanation stays collapsed unless the presenter opens it; the choice holds across steps.
+  AF.explainOpen = false;
   AF.stage = function (n, where, title, paras, right, powered) {
-    return '<div class="stage"><aside class="explain">' +
-      '<p class="kicker">Step ' + n + ' · ' + where + '</p>' +
-      '<h1 tabindex="-1">' + title + '</h1>' +
+    var open = AF.explainOpen;
+    return '<div class="stage"><header class="explain">' +
+      '<div class="explain-head"><div><p class="kicker">Step ' + n + ' · ' + where + '</p>' +
+      '<h1 tabindex="-1">' + title + '</h1></div>' +
+      '<button type="button" class="explain-toggle" data-explain aria-expanded="' + open + '" aria-controls="explain-body">' +
+      AF.icon('info') + '<span>' + (open ? 'Hide explanation' : 'Explain this step') + '</span></button></div>' +
+      '<div class="explain-body" id="explain-body"' + (open ? '' : ' hidden') + '>' +
       paras.map(function (p) { return '<p>' + p + '</p>'; }).join('') +
       (powered ? '<p class="powered">Powered by ' + powered + '</p>' : '') +
-      '</aside><div class="stage-main">' + right + '</div></div>';
+      '</div></header><div class="stage-main">' + right + '</div></div>';
   };
   AF.pill = function (tone, text, ic) {
     return '<span class="pill ' + tone + '">' + (ic ? AF.icon(ic) : '') + text + '</span>';

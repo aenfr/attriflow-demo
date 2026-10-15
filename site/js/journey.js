@@ -1,4 +1,4 @@
-/* AttriFlow demo v2 — the Track Journey: eight steps, each named after what happens to the song. */
+/* AttriFlow demo v2 — the Track Journey: seven steps, each named after what happens to the song. */
 (function () {
   'use strict';
   var AF = window.AF, T = AF.TRACK, icon = AF.icon, esc = AF.esc, usd = AF.usd;
@@ -9,8 +9,7 @@
   AF.SCENES = [
     { id: 'train', label: 'Train', event: 'Songs licensed' },
     { id: 'create', label: 'Create', event: 'Song generated' },
-    { id: 'verify', label: 'Verify', event: 'Song verified' },
-    { id: 'passport', label: 'Passport', event: 'Passport issued' },
+    { id: 'verify', label: 'Verify', event: 'Verified & downloaded' },
     { id: 'submit', label: 'Submit', event: 'Song re-scored' },
     { id: 'greenlane', label: 'Green Lane', event: 'Approved' },
     { id: 'stream', label: 'Stream', event: 'Song streamed' },
@@ -19,8 +18,7 @@
   AF.GATES = {
     train: function () { return true; },
     create: function () { return st().generated; },
-    verify: function () { return st().signed; },
-    passport: function () { return st().downloaded; },
+    verify: function () { return st().downloaded; },
     submit: function () { return st().analyzed; },
     greenlane: function () { return st().approved; },
     stream: function () { return st().streamed; },
@@ -28,10 +26,9 @@
   };
   AF.HINTS = {
     train: ['', 'Next: Sam makes a song with AI.'],
-    create: ['Tap “Generate” to make the song.', 'Song ready. Next: check it is ready for release.'],
-    verify: ['Sign the Letter of Direction.', 'Signed. Next: the song’s passport.'],
-    passport: ['Download the song when it is ready.', 'Downloaded. Next: upload it to a distributor.'],
-    submit: ['Submit the release.', 'Re-scored. Next: the distribution decision.'],
+    create: ['Upload your vocal, then tap “Generate”.', 'Song generated. Next: check if it’s authorized for download.'],
+    verify: ['Sign the Letter of Direction, then download the song.', 'Downloaded. Next: upload it to a distributor.'],
+    submit: ['Upload the song, then submit the release.', 'Release confirmed. Next: the distribution decision.'],
     greenlane: ['Choose whether to use the AI Green Lane.', 'Approved. Next: the release goes live.'],
     stream: ['Tap “Jump to end of month”.', 'Next: where the money goes.'],
     pay: ['', 'Next: your dashboard.']
@@ -53,7 +50,7 @@
       var cards = top().map(function (c) {
         return '<li class="cat-card">' + AF.cover(c, 'sm') +
           '<div class="cat-name"><b>' + c.song + '</b><span>' + c.artist + '</span>' +
-          '<span class="chips">' + AF.pill('good', 'Licensed', 'check') + AF.pill('neutral', 'Fingerprinted', 'fingerprint') + '</span></div>' +
+          '<span class="chips">' + AF.pill('good', 'Licensed', 'check') + AF.pill('neutral', 'Gradient signature extracted', 'wave') + '</span></div>' +
           AF.playBtn(c.id, 'play-sm') + '</li>';
       }).join('') +
         '<li class="cat-more">' + icon('note') + '<span>+ ' + rest().length + ' more licensed songs from the same ' + AF.RIGHTSHOLDERS + ' rightsholders</span></li>' +
@@ -70,29 +67,30 @@
         '<ul class="status-list">' +
         AF.statusRow('Training set', AF.CATALOG.length + ' licensed songs') +
         AF.statusRow('Rightsholders', String(AF.RIGHTSHOLDERS), 'good', 'users') +
-        AF.statusRow('Fingerprints', 'Every song', 'good', 'fingerprint') +
+        AF.statusRow('Gradient signatures', 'Extracted for every song', 'good', 'wave') +
         AF.statusRow('LUMINA attribution', 'Installed', 'good', 'flow') +
         AF.statusRow('Opted-out song', 'Never used', 'neutral', 'x') +
         '</ul></div></div></section>';
       return AF.stage(1, 'Behind the scenes', 'Real songs go into training, with permission',
         ['This happens long before Sam arrives, so users never see it. It shows where the AI’s musical knowledge comes from.',
-         'Only songs whose owners said yes are used. Each one gets a <b>fingerprint</b>, so its influence can be found later in any AI song.'],
-        right, 'licensed catalogs · fingerprinting');
+         'Only songs whose owners said yes are used. Each one has its <b>gradient signature extracted</b>, so its influence can be traced later in any AI song.'],
+        right, 'licensed catalogs · gradient signature extraction');
     }
   };
 
   // ---------- 2. Create ----------
   function cocreate(when, dark) {
-    var ai = AF.aiShare(when === 'now' ? 'now' : 'created');
+    var w = when === 'now' ? 'now' : 'created';
+    var ai = AF.recordingShare(w), all = AF.aiShare(w);
     return '<div class="cocreate' + (dark ? ' dark' : '') + '">' +
-      '<div class="cocreate-head"><span class="cocreate-title">Co-creation</span><b>AI ' + ai + '% · Human ' + (100 - ai) + '%</b>' +
+      '<div class="cocreate-head"><span class="cocreate-title">Recording</span><b>AI ' + ai + '% · Human ' + (100 - ai) + '%</b>' +
       '<button type="button" class="info-btn" data-info aria-expanded="false" aria-label="How AttriFlow weighs the parts">i</button></div>' +
-      '<span class="part-mix big" role="img" aria-label="AI ' + ai + '%, human ' + (100 - ai) + '%"><i class="ai" style="width:' + ai + '%"></i><i class="human" style="width:' + (100 - ai) + '%"></i></span>' +
-      '<p class="cocreate-note">AttriFlow weighs these parts and sets the song’s co-creation at ' + ai + '% AI and ' + (100 - ai) + '% human.</p>' +
+      '<span class="part-mix big" role="img" aria-label="Recording: AI ' + ai + '%, human ' + (100 - ai) + '%"><i class="ai" style="width:' + ai + '%"></i><i class="human" style="width:' + (100 - ai) + '%"></i></span>' +
+      '<p class="cocreate-note">The recording (vocals, lead guitar, percussion and production) is ' + ai + '% AI and ' + (100 - ai) + '% human.</p>' +
       '<div class="info-pop" hidden><p>Each part counts by how much it shapes the song: ' +
       AF.PARTS.map(function (p) { return p.name.toLowerCase() + ' ' + Math.round(p.weight * 100) + '%'; }).join(', ') + '. ' +
-      'AttriFlow multiplies each part’s AI share by its weight and adds them up. The result sets the AI influence royalty pool, ' +
-      'and it is checked again when the song reaches a distributor.</p><a href="#" data-method>More information</a></div></div>';
+      'AttriFlow multiplies each part’s AI share by its weight and adds them up. With the composition included, the whole song is ' + all + '% AI. ' +
+      'That sets the AI influence royalty pool, and it is checked again when the song reaches a distributor.</p><a href="#" data-method>More information</a></div></div>';
   }
   function partsList(when, dark, withTotal) {
     return '<ul class="parts' + (dark ? ' dark' : '') + '">' + AF.PARTS.map(function (p) {
@@ -133,9 +131,24 @@
       '<div class="song-meta"><h2>' + T.title + '</h2><p class="muted">Made by ' + T.user + ' with SongSpark · ' + T.length + ' · ' + T.bpm + ' BPM · ' + T.key + '</p>' +
       '<div class="wave" data-wave aria-hidden="true"></div></div>' + AF.playBtn('main') + '</div>' +
       '<div class="gen-panels reveal">' +
-      '<div class="inspired"><h3>What is AI, what is human</h3><p class="muted">You added the percussion. The AI made the rest.</p>' + partsList('created', true, true) + '</div>' +
-      '<div class="inspired"><h3>Who influenced the AI parts</h3><p class="muted">LUMINA attribution: ' + AF.CATALOG.length + ' licensed songs shaped the AI parts. The top ' + AF.TOP + ':</p>' + influenceList() + '</div>' +
+      '<div class="inspired"><h3>AI Profile</h3><p class="muted">You uploaded the vocal. The AI made the rest.</p>' + partsList('created', true, true) + '</div>' +
+      '<div class="inspired"><h3>LUMINA attribution record</h3><p class="muted">' + AF.CATALOG.length + ' licensed songs shaped the AI parts. The top ' + AF.TOP + ':</p>' + influenceList() + '</div>' +
       '</div>';
+  }
+  // The human part starts empty: Sam uploads it (mocked) before the AI can build the song around it.
+  function refRow(state) {
+    if (state === 'empty') {
+      return '<div class="upload-row empty"><span class="part-ico human">' + icon('mic') + '</span>' +
+        '<div class="upload-text"><b>Add your own part</b><span>Upload a vocal or instrument you recorded. The AI builds the song around it.</span></div>' +
+        '<button type="button" class="btn btn-secondary" id="upload-ref">' + icon('upload') + 'Upload audio reference</button></div>';
+    }
+    if (state === 'loading') {
+      return '<div class="upload-row loading"><span class="spinner" aria-hidden="true"></span>' +
+        '<div class="upload-text"><b>Uploading ' + T.upload + '…</b><span class="up-prog" aria-hidden="true"><i></i></span></div></div>';
+    }
+    return '<div class="upload-row reveal"><span class="part-ico human">' + icon('mic') + '</span>' +
+      '<div class="upload-text"><b>Your part: ' + T.upload + '</b><span>Your lead vocal · ' + T.uploadSize + ' · the AI builds the song around it</span></div>' +
+      AF.pill('human', 'Human', 'user') + '</div>';
   }
   V.create = {
     step: 1,
@@ -146,26 +159,35 @@
         '<textarea id="prompt" rows="2">' + esc(T.prompt) + '</textarea>' +
         '<div class="param-row">' +
         '<span class="param">BPM <b>' + T.bpm + '</b></span><span class="param">Key <b>' + T.key + '</b></span>' +
-        '<span class="param">Vocals <b>Female</b></span><span class="param">Length <b>' + T.length + '</b></span></div>' +
-        '<div class="upload-row"><span class="part-ico human">' + icon('drum') + '</span>' +
-        '<div class="upload-text"><b>Your part: ' + T.upload + '</b><span>Percussion you recorded, added to the song</span></div>' +
-        AF.pill('human', 'Human', 'user') + '</div>' +
+        '<span class="param">Vocals <b>Your upload</b></span><span class="param">Length <b>' + T.length + '</b></span></div>' +
+        '<div id="ref-slot" aria-live="polite">' + refRow(st().refUploaded ? 'done' : 'empty') + '</div>' +
         '<div class="prompt-row"><span class="muted small">SongSpark Plus</span>' +
-        '<button type="button" class="btn btn-spark btn-big" id="generate">' + icon('sparkles') + 'Generate</button></div></div>' +
+        '<button type="button" class="btn btn-spark btn-big" id="generate"' + (st().refUploaded ? '' : ' disabled') + '>' + icon('sparkles') + 'Generate</button></div></div>' +
         '<div id="gen-out" aria-live="polite">' + (st().generated ? createResult() : '') + '</div>';
       return AF.stage(2, 'SongSpark', 'Make a song together with AI',
-        ['Sam types an idea and adds a drum groove they recorded. The AI does the rest.',
-         'When the song is ready, two things show up: <b>which parts are AI and which are human</b>, and <b>which real songs influenced the AI parts</b>.'],
+        ['Sam uploads a vocal they recorded and types an idea. The AI writes and plays the rest around it.',
+         'When the song is ready, two things show up: its <b>AI Profile</b> (which parts are AI and which are human) and its <b>LUMINA attribution record</b> (which real songs influenced the AI parts).'],
         AF.appWindow('spark', 'SongSpark', ['Create', 'Library', 'Release'], 'Create', body), 'LUMINA attribution');
     },
     mount: function () {
       var out = document.getElementById('gen-out');
       if (st().generated) { growBars(out); AF.Wave.paint(out.querySelector('[data-wave]')); }
-      document.getElementById('generate').addEventListener('click', function () {
+      var gen = document.getElementById('generate'), up = document.getElementById('upload-ref');
+      if (up) up.addEventListener('click', function () {
+        var slot = document.getElementById('ref-slot');
+        slot.innerHTML = refRow('loading');
+        AF.later(function () {
+          slot.innerHTML = refRow('done');
+          AF.state.refUploaded = true; AF.save(); AF.refreshChrome();
+          gen.disabled = false;
+          gen.focus();
+        }, 1500);
+      });
+      gen.addEventListener('click', function () {
         var btn = this;
         btn.disabled = true;
         AF.Player.stop();
-        var lines = ['Reading your idea…', 'Layering your drum groove…', 'Writing the vocals and guitar…', 'Scoring influence with LUMINA…'];
+        var lines = ['Reading your idea…', 'Listening to your vocal…', 'Writing the guitar, drums and synths around it…', 'Scoring influence with LUMINA…'];
         function show(i) {
           out.innerHTML = '<div class="making"><span class="wave-anim" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span>' + lines[i] + '</span></div>';
         }
@@ -183,72 +205,8 @@
     }
   };
 
-  // ---------- 3. Verify ----------
+  // ---------- 3. Verify (and download) ----------
   var LOD_LABELS = ['Rightsholders who influenced the AI parts of my song', T.distributor + ', for Green Lane distribution', 'SongSpark, the AI platform', 'Fold, for AttriFlow'];
-  V.verify = {
-    step: 2,
-    html: function () {
-      var s = st();
-      var rows =
-        AF.statusRow('AI profile', 'Complete: AI and human parts recorded') +
-        AF.statusRow('LUMINA attribution record', 'Complete', 'good', 'flow') +
-        AF.statusRow('Fingerprint created', 'Complete', 'good', 'fingerprint') +
-        AF.statusRow('Rightsholders identified', AF.RIGHTSHOLDERS + ' rightsholders behind ' + AF.CATALOG.length + ' songs', 'good', 'users') +
-        (s.signed ? AF.statusRow('Letter of Direction', 'E-signed by you') : AF.statusRow('Letter of Direction', 'Waiting for your signature', 'warn', 'pen'));
-      var lod = s.signed
-        ? '<div class="signed reveal">' + AF.badge('pen', 'good') + '<div><b>Letter of Direction signed</b><p class="muted">Signed by ' + T.user + ' · ' + T.createdShort +
-          ', 14:34 UTC. This directs the distributor to pay a small share of your streaming revenues to the parties that influenced the AI parts of your song.</p></div></div>' +
-          '<div class="ready reveal"><ul class="ready-list">' +
-          '<li>' + icon('download') + '<span>Download status: <b>Eligible for verified download</b></span></li>' +
-          '<li>' + icon('upload') + '<span>Distribution status: <b>Eligible for verified distribution</b></span></li></ul>' +
-          '<a class="btn btn-spark btn-big" href="#/passport">' + icon('download') + 'Prepare for download</a></div>'
-        : '<div class="lod"><h3>' + icon('pen') + ' Letter of Direction</h3>' +
-          '<p>When “' + T.title + '” earns money from streaming, I direct the distributor to pay me, the user, at least <b>70% of the net streaming revenue</b>. ' +
-          'The remaining 30% at most fills the <b>AI influence royalty pool</b>, which is paid out as follows:</p>' +
-          AF.poolSplit(null, LOD_LABELS) +
-          '<ul class="lod-terms">' +
-          '<li>' + icon('sliders') + '<span>AttriFlow reduces the AI influence royalty pool when more of my song is detected as human.</span></li>' +
-          '<li>' + icon('search') + '<span>I grant AttriFlow the right to re-analyse my song when it reaches a distribution platform, and to re-score the human and AI parts in case I add human or AI parts after downloading it from SongSpark.</span></li></ul>' +
-          '<button type="button" class="btn btn-spark btn-big" id="sign">' + icon('pen') + 'Sign as ' + T.user + '</button></div>';
-      var body = '<h2 class="spark-title">Verification &amp; distribution readiness</h2>' +
-        '<ul class="status-list dark">' + rows + '</ul>' + lod;
-      return AF.stage(3, 'SongSpark', 'Check the song is verified and ready to distribute',
-        ['Before the song leaves SongSpark, AttriFlow records its AI profile, its influences and the rightsholders behind them.',
-         'Sam signs a <b>Letter of Direction</b>: an instruction to the distributor to share a small part of streaming revenue with those who influenced the AI parts.'],
-        AF.appWindow('spark', 'SongSpark', ['Create', 'Library', 'Release'], 'Release', body),
-        'LUMINA attribution · AI detection · fingerprinting');
-    },
-    mount: function () {
-      var sign = document.getElementById('sign');
-      if (!sign) return;
-      sign.addEventListener('click', function () {
-        AF.state.signed = true; AF.state.prepared = true; AF.save();
-        AF.rerender();
-      });
-    }
-  };
-
-  // ---------- 4. Passport ----------
-  function passportHtml() {
-    var fields = [
-      ['Track ID', T.id], ['ISRC', 'Assigned by your distributor'], ['User', T.user],
-      ['AI platform', 'SongSpark · ' + T.tier + ' tier'], ['Generated', T.created], ['Length · BPM · Key', T.length + ' · ' + T.bpm + ' · ' + T.key]
-    ];
-    return '<section class="passport">' +
-      '<div class="passport-head">' + AF.logo('attri') + '<div><p class="card-eyebrow">AttriFlow</p><h2>Track Passport</h2></div>' +
-      AF.pill('good', 'Verified', 'shield') + '</div>' +
-      '<div class="passport-id">' + AF.cover(T, 'sm') + '<div><b>' + T.title + '</b><span class="muted">' + T.user + '</span></div></div>' +
-      '<dl class="fields">' + fields.map(function (f) { return '<div><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join('') + '</dl>' +
-      '<h3 class="passport-sub">What happened inside the song so far</h3>' + partsList('created', false, true) +
-      '<h3 class="passport-sub">Checks</h3><ul class="status-list">' +
-      AF.statusRow('LUMINA attribution', 'Scored and available', 'good', 'flow') +
-      AF.statusRow('Fingerprint', 'Registered', 'good', 'fingerprint') +
-      AF.statusRow('Training licences', 'All ' + AF.CATALOG.length + ' influencing songs were licensed for training') +
-      AF.statusRow('Royalty tracking', AF.RIGHTSHOLDERS + ' rightsholders identified', 'good', 'users') +
-      AF.statusRow('Royalty obligations', 'Letter of Direction e-signed by you', 'good', 'pen') +
-      AF.statusRow('Distribution', 'Eligible for verified distribution', 'good', 'upload') +
-      '</ul></section>';
-  }
   function finderHtml(state) {
     var files = [[T.file, T.fileSize], [T.stems, T.stemsSize]];
     return '<div class="finder reveal" aria-label="Your computer’s Downloads folder">' +
@@ -263,25 +221,60 @@
       '<li class="file-row">' + icon('file') + '<span class="file-name">lyrics-draft.txt</span><span class="file-size">4 KB</span></li>' +
       '</ul></div></div>';
   }
-  V.passport = {
-    step: 3,
+  function downloadHtml() {
+    if (st().downloaded) {
+      return '<div class="dl-ready">' + AF.badge('check', 'good') + '<div><b>Downloaded</b><p class="muted">Your song and stems are on your computer.</p></div></div>' + finderHtml('done');
+    }
+    return '<div class="dl-ready" id="dl-msg"><span class="spinner" aria-hidden="true"></span><div><b>Preparing your download…</b><p class="muted">Attaching the AttriFlow record to the song file.</p></div></div>' +
+      '<button type="button" class="btn btn-spark btn-big" id="download" disabled>' + icon('download') + 'Download</button><div id="finder"></div>';
+  }
+  V.verify = {
+    step: 2,
     html: function () {
-      var dl = st().downloaded
-        ? '<div class="dl-ready">' + AF.badge('check', 'good') + '<div><b>Downloaded</b><p class="muted">Your song and stems are on your computer.</p></div></div>' + finderHtml('done')
-        : '<div class="dl-ready" id="dl-msg"><span class="spinner" aria-hidden="true"></span><div><b>Preparing your download…</b><p class="muted">Adding the passport to the song file.</p></div></div>' +
-          '<button type="button" class="btn btn-primary btn-big" id="download" disabled>' + icon('download') + 'Download</button><div id="finder"></div>';
-      var right = passportHtml() + '<section class="card dl-card" aria-live="polite">' + dl + '</section>';
-      return AF.stage(4, 'AttriFlow', 'The song gets a passport',
-        ['Every verified song gets an <b>AttriFlow Track Passport</b>: one record of who made it, with which AI, what is human, and who gets paid.',
-         'The passport travels with the song wherever it goes next.'],
-        right, 'LUMINA attribution · fingerprinting');
+      var s = st();
+      var rows =
+        AF.statusRow('AI Profile', 'Complete: AI and human parts recorded') +
+        AF.statusRow('LUMINA attribution record', 'Complete', 'good', 'flow') +
+        AF.statusRow('Gradient signature', 'Extracted', 'good', 'wave') +
+        AF.statusRow('Rightsholders identified', AF.RIGHTSHOLDERS + ' rightsholders behind ' + AF.CATALOG.length + ' songs', 'good', 'users') +
+        (s.signed ? AF.statusRow('Letter of Direction', 'E-signed by you') : AF.statusRow('Letter of Direction', 'Waiting for your signature', 'warn', 'pen'));
+      var lod = s.signed
+        ? '<div class="signed reveal">' + AF.badge('pen', 'good') + '<div><b>Letter of Direction signed</b><p class="muted">Signed by ' + T.user + ' · ' + T.createdShort +
+          ', 14:34 UTC. This directs the distributor to retain up to 30% of your net streaming revenues as an AI Influence Royalty for the artists who trained SongSpark.</p></div></div>' +
+          '<div class="ready reveal"><ul class="ready-list">' +
+          '<li>' + icon('download') + '<span>Download status: <b>Eligible for verified download</b></span></li>' +
+          '<li>' + icon('upload') + '<span>Distribution status: <b>Eligible for verified distribution</b></span></li></ul>' +
+          '<div class="dl-card" aria-live="polite">' + downloadHtml() + '</div></div>'
+        : '<div class="lod"><h3>' + icon('pen') + ' Letter of Direction</h3>' +
+          '<p>If “' + T.title + '” earns money from streaming, I direct the digital music distributor to retain up to 30% of the net streaming revenues as an “AI Influence Royalty” to compensate human artists that trained SongSpark.</p>' +
+          '<details class="lod-more"><summary>Click here to expand</summary>' +
+          '<p>As a condition of downloading “' + T.title + '”, I irrevocably agree that I will direct and authorize any digital music distributor to retain a portion of my net streaming revenues, ' +
+          'for the creation of an “AI Influence Royalty” pool, to be paid to the original human artists, writers, and the rightsholders whose works influenced the creation of the AI components of “' + T.title + '”. ' +
+          'I acknowledge and agree that such portion will be determined upon analysis of the human vs AI components of “' + T.title + '”, and shall be set between 10-30% of the net streaming revenues.</p></details>' +
+          '<button type="button" class="btn btn-spark btn-big" id="sign">' + icon('pen') + 'Sign as ' + T.user + '</button></div>';
+      var body = '<h2 class="spark-title">Verification &amp; download readiness</h2>' +
+        '<ul class="status-list dark">' + rows + '</ul>' + lod;
+      return AF.stage(3, 'SongSpark', 'Check if the song is verified and ready to download',
+        ['Before the song leaves SongSpark, AttriFlow records its AI Profile, its influences and the rightsholders behind them.',
+         'Sam signs a <b>Letter of Direction</b>: an instruction to the distributor to retain part of the streaming revenue for the artists who influenced the AI parts. Then the song can be downloaded.'],
+        AF.appWindow('spark', 'SongSpark', ['Create', 'Library', 'Release'], 'Release', body),
+        'LUMINA attribution · AI detection · gradient signature extraction');
     },
     mount: function () {
-      if (st().downloaded) return;
+      var sign = document.getElementById('sign');
+      if (sign) {
+        sign.addEventListener('click', function () {
+          AF.state.signed = true; AF.save();
+          AF.rerender();
+        });
+        return;
+      }
       var btn = document.getElementById('download');
+      if (!btn) return;
       AF.later(function () {
         document.getElementById('dl-msg').innerHTML = AF.badge('check', 'good') +
           '<div><b>Download has been prepared</b><p class="muted">Your song and stems are now available for download.</p></div>';
+        AF.state.prepared = true; AF.save();
         btn.disabled = false;
       }, 1300);
       btn.addEventListener('click', function () {
@@ -298,7 +291,7 @@
     }
   };
 
-  // ---------- 5. Submit: AI flag, re-analysis, re-score ----------
+  // ---------- 4. Submit: AI flag, re-score, release confirmed ----------
   function weighRow(label, share, pool, now) {
     return '<div class="weigh-row' + (now ? ' is-now' : '') + '"><span class="weigh-label">' + label + '</span>' +
       '<div class="weigh"><span class="w-ai" style="flex:' + share + '">AI ' + share + '%</span><span class="w-human" style="flex:' + (100 - share) + '">Human ' + (100 - share) + '%</span></div>' +
@@ -307,27 +300,35 @@
   function cmpBar(ai) {
     return '<span class="cmp" role="img" aria-label="AI ' + ai + '%, human ' + (100 - ai) + '%"><i class="ai" style="width:' + ai + '%"></i><i class="human" style="width:' + (100 - ai) + '%"></i></span>';
   }
+  function partNum(p, ai) { return p.kind === 'human' ? '100% human' : ai + '% AI'; }
   function analysisHtml() {
     var m = AF.money();
+    var anyChanged = AF.PARTS.some(function (p) { return p.ai !== p.aiNow; });
     var rows = AF.PARTS.map(function (p) {
       var changed = p.ai !== p.aiNow;
       return '<tr' + (changed ? ' class="hl"' : '') + '><th scope="row"><span class="part-ico ' + AF.partTone(changed && p.kindNow ? p.kindNow : p.kind) + '">' + icon(AF.partIcon(p.name)) + '</span>' + p.name + '</th>' +
-        '<td>' + cmpBar(p.ai) + '<span class="cmp-num">' + p.ai + '% AI</span></td>' +
-        '<td>' + cmpBar(p.aiNow) + '<span class="cmp-num">' + (changed ? '100% human' : p.aiNow + '% AI') + '</span></td>' +
+        '<td>' + cmpBar(p.ai) + '<span class="cmp-num">' + partNum(p, p.ai) + '</span></td>' +
+        '<td>' + cmpBar(p.aiNow) + '<span class="cmp-num">' + partNum(p, p.aiNow) + '</span></td>' +
         '<td>' + (changed ? AF.pill('warn', 'Re-scored', 'sliders') : AF.pill('good', 'Match', 'check')) + '</td></tr>';
     }).join('');
-    return '<div class="modal-head good">' + icon('search') + '<h2 id="modal-title">AttriFlow re-analysis</h2></div>' +
+    var same = m.poolThen === m.pool;
+    return '<div class="modal-head good">' + icon('search') + '<h2 id="modal-title">AttriFlow re-scored</h2></div>' +
       '<div class="analysis">' +
-      '<section><h3>What we hear now, compared with the passport</h3>' +
-      '<div class="table-wrap"><table class="table cmp-table"><thead><tr><th>Part</th><th>At creation</th><th>Detected now</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-      '<p class="note warn">' + icon('mic') + '<span>Since you created the song on ' + T.createdShort + ', we detected a new <b>human vocal</b>. We re-weighted the vocals from 100% AI to 100% human and re-scored the song.</span></p></section>' +
+      '<section><h3>What we hear now, compared with SongSpark</h3>' +
+      '<div class="table-wrap"><table class="table cmp-table"><thead><tr><th>Part</th><th>At SongSpark</th><th>Re-scored now</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      (anyChanged
+        ? '<p class="note warn">' + icon('sliders') + '<span>Some parts changed since you created the song on ' + T.createdShort + '. We re-weighted them and re-scored the song.</span></p>'
+        : '<p class="note good">' + icon('check') + '<span>Everything matches what SongSpark recorded on ' + T.createdShort + ': your uploaded vocal is human, and the AI parts are unchanged.</span></p>') +
+      '</section>' +
       '<section><h3>AI influence royalty pool</h3>' +
-      weighRow('At creation', m.shareThen, m.poolThen) + weighRow('Now', m.aiShare, m.pool, true) +
+      weighRow('At SongSpark', m.shareThen, m.poolThen) + weighRow('AttriFlow re-scored', m.aiShare, m.pool, true) +
       '<div class="tiers">' + [10, 20, 30].map(function (t) {
         return '<div class="tier' + (t === m.pool ? ' on' : '') + '"><b>' + t + '%</b><span>' + (t === 10 ? 'mostly human' : t === 20 ? 'half and half' : 'mostly AI') + '</span></div>';
       }).join('') + '</div>' +
-      '<p class="note good">' + icon('cash') + '<span>Your share of streaming revenue goes up from <b>' + (100 - m.poolThen) + '% to ' + (100 - m.pool) + '%</b>. ' +
-      'You keep ' + (m.poolThen - m.pool) + ' more cents of every dollar, because more of your song is now human.</span></p></section>' +
+      '<p class="note good">' + icon('cash') + '<span>' + (same
+        ? 'You keep <b>' + (100 - m.pool) + '%</b> of your streaming revenue. The AI influence royalty pool stays at <b>' + m.pool + '%</b>, re-confirmed with distributor.'
+        : 'Your share of streaming revenue changes from <b>' + (100 - m.poolThen) + '% to ' + (100 - m.pool) + '%</b>. The AI influence royalty pool is set at <b>' + m.pool + '%</b>, re-confirmed with distributor.') +
+      '</span></p></section>' +
       '<section><h3>Letter of Direction detected</h3>' +
       '<p class="muted small">You agree to these streaming revenue shares:</p>' +
       '<ul class="split-legend compact">' +
@@ -341,14 +342,15 @@
   function submitSummary() {
     var m = AF.money();
     return '<div class="card summary reveal">' + AF.badge('shield', 'good') +
-      '<div><b>AttriFlow re-analysis complete</b><p class="muted">Human vocal detected · AI influence royalty pool lowered from ' + m.poolThen + '% to ' + m.pool + '% · Letter of Direction re-confirmed.</p></div></div>';
+      '<div><b>Congratulations, you are an ethical AI user.</b><p class="muted">AttriFlow re-scored “' + T.title + '”: AI ' + m.aiShare + '% · Human ' + (100 - m.aiShare) +
+      '% → AI influence royalty pool ' + m.pool + '%, re-confirmed with distributor. Letter of Direction agreed.</p></div></div>';
   }
   function runChecks() {
     AF.modal('<div class="modal-head warn">' + icon('alert') + '<h2 id="modal-title">Your track appears to contain AI</h2></div>' +
-      '<p>' + T.distributor + '’s detector found AI-generated sound in “' + T.title + '”. Let’s check how it was made.</p>' +
-      '<div class="modal-actions"><button type="button" class="btn btn-primary btn-big" id="m-next" data-autofocus>Check how it was made</button></div>');
+      '<p>' + T.distributor + '’s detector found AI-generated sound in “' + T.title + '”. Let’s look at the AI detection results.</p>' +
+      '<div class="modal-actions"><button type="button" class="btn btn-primary btn-big" id="m-next" data-autofocus>See AI detection results</button></div>');
     document.getElementById('m-next').addEventListener('click', function () {
-      var steps = ['Matching the song’s fingerprint', 'Reading its AttriFlow passport', 'Comparing what we hear now with the passport', 'Re-scoring the human and AI parts'];
+      var steps = ['Matching the song’s gradient signature', 'Reading its AttriFlow record from SongSpark', 'Comparing what we hear now with SongSpark’s AI Profile', 'Re-scoring the human and AI parts'];
       AF.modal('<div class="modal-head"><span class="spinner" aria-hidden="true"></span><h2 id="modal-title">Please wait while we check whether your AI song was made ethically…</h2></div>' +
         '<ul class="wait-list" aria-live="polite">' + steps.map(function (s, i) { return '<li data-i="' + i + '">' + icon('check') + '<span>' + s + '</span></li>'; }).join('') + '</ul>');
       steps.forEach(function (_, i) {
@@ -359,8 +361,9 @@
       });
       AF.later(function () {
         AF.modal('<div class="modal-head good">' + icon('shield') + '<h2 id="modal-title">Analysis complete</h2></div>' +
-          '<p class="big-p"><b>Congratulations, you are an ethical AI user.</b> Your song is partly human and partly AI.</p>' +
-          '<p>The AI parts (lead guitar and most of the composition) were created on <b>' + T.createdShort + '</b> on <b>SongSpark</b>. Since then, you added your own vocal.</p>' +
+          '<p class="big-p">Your song is partly human and partly AI.</p>' +
+          '<p>The AI parts (most of the composition, the lead guitar, the percussion and AI-assisted production) were created on <b>' + T.createdShort + '</b> on <b>SongSpark</b>, ' +
+          'around the <b>lead vocal you recorded and uploaded</b>. Your vocal is human.</p>' +
           '<div class="modal-actions"><button type="button" class="btn btn-primary btn-big" id="m-details" data-autofocus>See the analysis</button></div>');
         document.getElementById('m-details').addEventListener('click', function () {
           AF.modal(analysisHtml(), { wide: true });
@@ -373,35 +376,56 @@
       }, 650 * (steps.length + 1));
     });
   }
+  function songFile(state) {
+    if (state === 'empty') {
+      return '<div class="file-drop empty">' + icon('upload') + '<div><b>Upload your song</b><span class="muted">WAV or FLAC, up to 200 MB</span></div>' +
+        '<button type="button" class="btn btn-secondary" id="upload-song">Choose file</button></div>';
+    }
+    if (state === 'loading') {
+      return '<div class="file-drop loading"><span class="spinner" aria-hidden="true"></span><div><b>Uploading ' + T.file + '…</b><span class="up-prog" aria-hidden="true"><i></i></span></div></div>';
+    }
+    return '<div class="file-drop reveal">' + icon('file') + '<div><b>' + T.file + '</b><span class="muted">' + T.fileSize + ' · downloaded from SongSpark</span></div>' +
+      AF.pill('good', 'Uploaded', 'check') + '</div>';
+  }
   V.submit = {
-    step: 4,
+    step: 3,
     html: function () {
       var s = st();
       var body =
-        '<h2 class="drop-h">New release</h2>' +
-        '<div class="file-drop">' + icon('file') + '<div><b>' + T.finalFile + '</b><span class="muted">' + T.finalSize + ' · your final mix with your own vocal · passport attached</span></div>' +
-        AF.pill('good', 'Attached', 'check') + '</div>' +
+        '<h2 class="drop-h">' + (s.analyzed ? 'Confirmation of release' : 'New release') + '</h2>' +
+        '<div id="song-slot" aria-live="polite">' + songFile(s.songUploaded ? 'done' : 'empty') + '</div>' +
         '<div class="form grid2">' +
         '<div class="field"><label for="f-title">Song title</label><input id="f-title" value="' + esc(T.title) + '"></div>' +
         '<div class="field"><label for="f-artist">Artist name</label><input id="f-artist" value="' + esc(T.user) + '"></div>' +
+        '<div class="field"><label for="f-label">Label</label><input id="f-label" value="Rivera Records (self-released)"></div>' +
         '<div class="field"><label for="f-genre">Genre</label><select id="f-genre"><option>Folk</option><option>Pop</option><option>Dance</option></select></div>' +
         '<div class="field"><label for="f-date">Release date</label><input id="f-date" type="date" value="2026-10-08"></div></div>' +
-        '<div class="actions"><button type="button" class="btn btn-primary btn-big" id="submit"' + (s.analyzed ? ' disabled' : '') + '>' +
+        '<div class="actions"><button type="button" class="btn btn-primary btn-big" id="submit"' + (s.analyzed || !s.songUploaded ? ' disabled' : '') + '>' +
         (s.analyzed ? icon('check') + 'Submitted' : icon('upload') + 'Submit release') + '</button></div>' +
         '<div id="submit-out" aria-live="polite">' + (s.analyzed ? submitSummary() : '') + '</div>';
-      return AF.stage(5, T.distributor, 'Upload to a distributor',
-        ['After downloading, Sam recorded their own vocal over the song. Now Sam uploads the final mix to <b>' + T.distributor + '</b>.',
-         'The detector flags AI. <b>AttriFlow re-analyses the song</b> against its passport and re-scores the human and AI parts.'],
+      return AF.stage(4, T.distributor, 'Upload to a distributor',
+        ['Sam uploads the song they downloaded from SongSpark to <b>' + T.distributor + '</b>.',
+         'The detector flags AI. <b>AttriFlow re-scores the song</b> against what SongSpark recorded and re-confirms the AI influence royalty pool with the distributor.'],
         AF.appWindow('drop', T.distributor, ['Releases', 'Earnings', 'Help'], 'Releases', body),
-        'AI detection · fingerprinting · LUMINA attribution');
+        'AI detection · gradient signature extraction · LUMINA attribution');
     },
     mount: function () {
-      var b = document.getElementById('submit');
+      var b = document.getElementById('submit'), up = document.getElementById('upload-song');
+      if (up) up.addEventListener('click', function () {
+        var slot = document.getElementById('song-slot');
+        slot.innerHTML = songFile('loading');
+        AF.later(function () {
+          slot.innerHTML = songFile('done');
+          AF.state.songUploaded = true; AF.save();
+          b.disabled = false;
+          b.focus();
+        }, 1500);
+      });
       if (b && !st().analyzed) b.addEventListener('click', runChecks);
     }
   };
 
-  // ---------- 6. Green Lane ----------
+  // ---------- 5. Green Lane ----------
   var BENEFITS = [
     ['Release faster', 'approved in 1 day, not 7'],
     ['Release with confidence', 'fewer rejections and takedowns'],
@@ -436,7 +460,7 @@
       '<button type="button" class="btn btn-green btn-big" id="gl-yes">' + icon('check') + 'Yes, proceed</button></div></div>';
   }
   V.greenlane = {
-    step: 5,
+    step: 4,
     html: function () {
       var body =
         '<div class="decision"><div class="light" aria-hidden="true"><i class="r"></i><i class="a"></i><i class="g on"></i></div>' +
@@ -450,11 +474,11 @@
         '<p class="pitch-sub">You can now:</p>' +
         '<ul class="benefits">' + BENEFITS.map(function (b) { return '<li>' + icon('check') + '<span><b>' + b[0] + '</b>: ' + b[1] + '</span></li>'; }).join('') + '</ul></section>' +
         '<div id="proceed" aria-live="polite">' + proceedHtml() + '</div>';
-      return AF.stage(6, T.distributor, 'Accept verified AI',
+      return AF.stage(5, T.distributor, 'Accept verified AI',
         ['Today a distributor either rejects AI music broadly, or accepts it and inherits the risk.',
          'AttriFlow adds a third option: <b>accept verified AI</b>. GREEN goes out, AMBER gets a human review, RED is held.'],
         AF.appWindow('drop', T.distributor, ['Releases', 'Earnings', 'Help'], 'Releases', body),
-        'store policy engine · AttriFlow passport');
+        'store policy engine · AttriFlow record');
     },
     mount: function () {
       var box = document.getElementById('proceed');
@@ -483,7 +507,7 @@
     }
   };
 
-  // ---------- 7. Stream ----------
+  // ---------- 6. Stream ----------
   function flowHtml() {
     var nodes = [['spark', 'SongSpark', 'made it'], ['attri', 'AttriFlow', 'verified it'], ['drop', T.distributor, 'distributed it'], ['store', '7 stores', 'stream it']];
     return '<ol class="flow">' + nodes.map(function (n, i) {
@@ -493,7 +517,7 @@
   }
   AF.flowHtml = flowHtml;
   V.stream = {
-    step: 6,
+    step: 5,
     html: function () {
       var s = st(), m = AF.money(), max = AF.DSPS[0].streams;
       var rows = AF.DSPS.filter(function (d) { return d.ok; }).map(function (d) {
@@ -507,10 +531,10 @@
         '<ul class="dsp-rows">' + rows + '</ul>' +
         '<div class="actions"><button type="button" class="btn btn-primary btn-big" id="jump"' + (s.streamed ? ' disabled' : '') + '>' +
         (s.streamed ? icon('check') + 'Month finished' : icon('forward') + 'Jump to end of month') + '</button></div></section>';
-      return AF.stage(7, 'Streaming stores', 'The release goes live',
+      return AF.stage(6, 'Streaming stores', 'The release goes live',
         ['The song moves from the AI app, through AttriFlow and the distributor, to the stores.',
          'Streams start to add up. AttriFlow keeps the link between every stream and the song’s attribution.'],
-        right, 'AttriFlow passport · fingerprinting');
+        right, 'AttriFlow record · gradient signatures');
     },
     mount: function () {
       var b = document.getElementById('jump');
@@ -527,7 +551,7 @@
     }
   };
 
-  // ---------- 8. Pay ----------
+  // ---------- 7. Pay ----------
   AF.payeeTable = function (m) {
     return '<div class="table-wrap"><table class="table"><thead><tr><th>Rightsholder</th><th>Side</th><th class="num">Songs</th><th class="num">Paid</th></tr></thead><tbody>' +
       m.payees.map(function (p) {
@@ -544,7 +568,7 @@
       }).join('') + '</tbody></table></div>' + (open ? '' : '</details>');
   };
   V.pay = {
-    step: 7,
+    step: 6,
     html: function () {
       var m = AF.money();
       var right =
@@ -553,13 +577,13 @@
         '<div class="pool-box"><p class="card-eyebrow">AI influence royalty pool</p>' +
         '<div class="pool-meter" role="img" aria-label="Pool set to ' + m.pool + '% of a 30% maximum"><i style="width:' + (m.pool / 30 * 100) + '%"></i></div>' +
         '<div class="pool-ticks" aria-hidden="true"><span>10%</span><span>20%</span><span>30%</span></div>' +
-        '<p class="muted small">Set by AttriFlow after re-scoring: AI share ' + m.aiShare + '% → pool ' + m.pool + '% (' + m.poolThen + '% at creation).</p></div></div>' +
+        '<p class="muted small">Set by AttriFlow after re-scoring: AI share ' + m.aiShare + '% → pool ' + m.pool + '% (' + m.poolThen + '% at SongSpark, re-confirmed with distributor).</p></div></div>' +
         AF.netSplit(m) + '</section>' +
         '<section class="card"><div class="card-head"><h3>AI influence royalty pool</h3><span class="muted">' + usd(m.poolAmt) + '</span></div>' +
         AF.poolSplit(m) +
         '<p class="muted small" style="margin-top:12px">' + T.distributor + ' keeps its 5% and sends the other 95% (' + usd(m.toFold) + ') to Fold. Fold pays the rightsholders and SongSpark, and keeps its 5%.</p>' +
-        '<div class="actions"><a class="btn btn-primary btn-big" href="#/dash/user">' + icon('user') + 'Open my dashboard</a></div></section>';
-      return AF.stage(8, 'AttriFlow', 'The money flows back',
+        '<div class="actions"><a class="btn btn-primary btn-big" href="#/dash/user">' + icon('user') + 'Open ' + T.title + ' dashboard</a></div></section>';
+      return AF.stage(7, 'AttriFlow', 'The money flows back',
         [T.distributor + ' pays Sam ' + (100 - m.pool) + '% of the distribution revenue directly. The other ' + m.pool + '% is the AI influence royalty pool, and the rightsholder share of it is split by the LUMINA influence scores: <b>bigger influence, bigger share</b>.',
          'Generation → attribution → distribution → streaming → revenue → rightsholders.'],
         right, 'LUMINA attribution · AttriFlow ledger');

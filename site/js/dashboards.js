@@ -31,7 +31,7 @@
       '<li><span><i class="dot aip"></i>AI platform ' + s.ai + '%</span><b>' + usd(m.ai) + '</b></li>' +
       '<li><span><i class="dot fold"></i>Fold ' + s.fold + '%</span><b>' + usd(m.fold) + '</b></li></ul></div>' +
       '</div><p class="muted small">AttriFlow sets the pool between 10% and 30% of net streaming revenue from its weighing of AI and human parts. ' +
-      'This song was re-scored at distribution: ' + m.poolThen + '% → ' + m.pool + '%.</p></section>';
+      (m.poolThen === m.pool ? 'This song was re-scored at distribution: ' + m.pool + '%, re-confirmed with distributor.' : 'This song was re-scored at distribution: ' + m.poolThen + '% → ' + m.pool + '%.') + '</p></section>';
   }
 
   function dashHead(kind, org, title, line) {
@@ -106,7 +106,7 @@
         '<section class="card"><div class="card-head"><h3>AI influence royalty pool · ' + T.title + '</h3><span class="muted">' + usd(m.poolAmt) + ' · ' + m.pool + '% of net streaming revenue</span></div>' +
         '<div class="table-wrap"><table class="table"><thead><tr><th>Payee</th><th>Role</th><th class="num">Share of pool</th><th class="num">This month</th><th>Payment route</th></tr></thead><tbody>' +
         payees.map(function (p) { return '<tr><th scope="row">' + p[0] + '</th><td>' + p[1] + '</td><td class="num">' + p[2] + '</td><td class="num">' + usd(p[3]) + '</td><td>' + p[4] + '</td></tr>'; }).join('') +
-        '</tbody></table></div><p class="muted small">From the Letter of Direction, the fingerprints and the AttriFlow re-score. The user’s ' + (100 - m.pool) + '% (' + usd(m.user) +
+        '</tbody></table></div><p class="muted small">From the Letter of Direction, the gradient signatures and the AttriFlow re-score. The user’s ' + (100 - m.pool) + '% (' + usd(m.user) +
         ') is paid directly and is not part of the pool. ' + T.distributor + ' keeps its 5% and sends the other 95% (' + usd(m.toFold) + ') to Fold.</p></section>' +
         releaseStrip();
     },
@@ -222,7 +222,7 @@
         '<div class="grid2"><section class="card"><h3>' + icon('note') + ' Licensed catalogs</h3><ul class="status-list">' +
         AF.statusRow('Publishers licensed', '5, current') +
         AF.statusRow('Labels licensed', '5, current') +
-        AF.statusRow('Songs available for training', 'All fingerprinted', 'good', 'fingerprint') +
+        AF.statusRow('Songs available for training', 'Gradient signatures extracted', 'good', 'wave') +
         AF.statusRow('Opt-outs honoured', '1 song removed before training', 'neutral', 'x') +
         '</ul></section>' +
         '<section class="card"><h3>' + icon('flow') + ' ' + T.title + '</h3><p class="muted small">One of this month’s generations, as SongSpark made it.</p>' +
@@ -238,8 +238,8 @@
       var m = AF.money();
       var steps = [
         ['sparkles', 'Generated on SongSpark', T.created],
-        ['shield', 'Verified by AttriFlow', 'Passport ' + T.id],
-        ['mic', 'Your vocal added, song re-scored', 'AI share ' + m.shareThen + '% → ' + m.aiShare + '% · pool ' + m.poolThen + '% → ' + m.pool + '%'],
+        ['shield', 'Verified by AttriFlow', 'Track ID ' + T.id],
+        ['mic', 'Re-scored at distribution', 'AI share ' + m.aiShare + '% · pool ' + m.pool + '%, re-confirmed with distributor'],
         ['upload', 'Distributed by ' + T.distributor, 'AI Green Lane · approved in 1 day'],
         ['headphones', 'Streamed ' + num(m.streams) + ' times', '7 stores']
       ];
@@ -257,7 +257,7 @@
           AF.metric('Streams this month', num(m.streams), '7 stores', 'headphones'),
           AF.metric('Your earnings', usd(m.user), (100 - m.pool) + '% of net streaming revenue', 'cash'),
           AF.metric('AI influence royalty pool', usd(m.poolAmt), m.pool + '% of net streaming revenue', 'flow'),
-          AF.metric('Human contribution', (100 - m.aiShare) + '%', 'Re-scored at distribution · ' + (100 - m.shareThen) + '% at creation', 'user'),
+          AF.metric('Human contribution', (100 - m.aiShare) + '%', 'Your uploaded vocal · re-confirmed with distributor', 'user'),
           AF.metric('Stores', '7 of 8', 'Store X reviews by hand', 'store')
         ]) +
         '<div class="grid2 wide-left"><section class="card"><h3>The story so far</h3><ol class="timeline">' +

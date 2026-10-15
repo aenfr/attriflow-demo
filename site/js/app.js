@@ -50,7 +50,9 @@
     navbar.hidden = false;
     var id = AF.SCENES[idx].id, ok = AF.GATES[id](), h = AF.HINTS[id];
     nextBtn.disabled = !ok;
-    nextBtn.innerHTML = id === 'pay' ? 'My dashboard →' : 'Next →';
+    // Pay ends the journey with its own "Open … dashboard" button, so the bar has no Next there.
+    nextBtn.hidden = id === 'pay';
+    nextBtn.innerHTML = 'Next →';
     hint.textContent = ok ? h[1] : h[0];
   }
 
@@ -108,6 +110,13 @@
     if (idx < 0 || !AF.GATES[AF.SCENES[idx].id]()) return;
     go(idx < AF.SCENES.length - 1 ? AF.SCENES[idx + 1].id : 'dash/user');
   });
+  document.getElementById('replay').addEventListener('click', function () {
+    var idx = sceneIndex(route.name);
+    if (idx < 0) return;
+    AF.Player.stop();
+    AF.resetScene(AF.SCENES[idx].id);
+    render(false);
+  });
   roleSel.addEventListener('change', function () { if (roleSel.value) go('dash/' + roleSel.value); });
   document.getElementById('reset').addEventListener('click', function () {
     AF.Player.stop();
@@ -118,6 +127,15 @@
     var p = e.target.closest('[data-play]');
     if (p) { AF.Player.toggle(p.getAttribute('data-play')); return; }
     var info = e.target.closest('[data-info]');
+    var ex = e.target.closest('[data-explain]');
+    if (ex) {
+      AF.explainOpen = ex.getAttribute('aria-expanded') !== 'true';
+      var body = document.getElementById('explain-body');
+      if (body) body.hidden = !AF.explainOpen;
+      ex.setAttribute('aria-expanded', String(AF.explainOpen));
+      ex.querySelector('span').textContent = AF.explainOpen ? 'Hide explanation' : 'Explain this step';
+      return;
+    }
     if (info) {
       var pop = info.closest('.cocreate').querySelector('.info-pop');
       pop.hidden = !pop.hidden;

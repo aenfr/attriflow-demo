@@ -33,12 +33,13 @@
 
   // What is AI and what is human inside the track: at SongSpark (ai) and when AttriFlow re-scores it at the
   // distributor (aiNow). Weights add up to 1. Sam uploads their own lead vocal as the audio reference, and the
-  // AI makes the rest; the distributor re-score finds the same mix, so the pool is re-confirmed.
+  // AI makes the rest. After downloading, Sam replaces the AI lead guitar with their own playing, so the
+  // distributor re-score lowers the AI share (71% to 46%) and the pool (30% to 20%).
   AF.PARTS = [
     { name: 'Composition', kind: 'mix', ai: 75, aiNow: 75, weight: 0.4, label: 'AI 75% · Human 25%' },
-    { name: 'Vocals', kind: 'human', ai: 0, aiNow: 0, weight: 0.2, label: 'Your vocal, uploaded' },
-    { name: 'Lead guitar', kind: 'ai', ai: 100, aiNow: 100, weight: 0.15, label: 'AI-generated' },
-    { name: 'Percussion', kind: 'ai', ai: 100, aiNow: 100, weight: 0.15, label: 'AI-generated' },
+    { name: 'Vocals', kind: 'human', ai: 0, aiNow: 0, weight: 0.15, label: 'Your vocal, uploaded' },
+    { name: 'Lead guitar', kind: 'ai', ai: 100, aiNow: 0, weight: 0.25, label: 'AI-generated', kindNow: 'human', labelNow: 'Your guitar, re-recorded' },
+    { name: 'Percussion', kind: 'ai', ai: 100, aiNow: 100, weight: 0.1, label: 'AI-generated' },
     { name: 'Production', kind: 'assist', ai: 60, aiNow: 60, weight: 0.1, label: 'AI-assisted' }
   ];
   AF.aiShare = function (when) {

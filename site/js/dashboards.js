@@ -31,7 +31,7 @@
       '<li><span><i class="dot aip"></i>AI platform ' + s.ai + '%</span><b>' + usd(m.ai) + '</b></li>' +
       '<li><span><i class="dot fold"></i>Fold ' + s.fold + '%</span><b>' + usd(m.fold) + '</b></li></ul></div>' +
       '</div><p class="muted small">AttriFlow sets the pool between 10% and 30% of net streaming revenue from its weighing of AI and human parts. ' +
-      (m.poolThen === m.pool ? 'This song was re-scored at distribution: ' + m.pool + '%, re-confirmed with distributor.' : 'This song was re-scored at distribution: ' + m.poolThen + '% → ' + m.pool + '%.') + '</p></section>';
+      (m.poolThen === m.pool ? 'This song was re-scored at distribution: ' + m.pool + '%, re-confirmed with distributor.' : 'This song was re-scored at distribution: ' + m.poolThen + '% → ' + m.pool + '%, re-confirmed with distributor.') + '</p></section>';
   }
 
   function dashHead(kind, org, title, line) {
@@ -239,7 +239,7 @@
       var steps = [
         ['sparkles', 'Generated on SongSpark', T.created],
         ['shield', 'Verified by AttriFlow', 'Track ID ' + T.id],
-        ['mic', 'Re-scored at distribution', 'AI share ' + m.aiShare + '% · pool ' + m.pool + '%, re-confirmed with distributor'],
+        ['guitar', 'Your lead guitar added, song re-scored', 'AI share ' + m.shareThen + '% → ' + m.aiShare + '% · pool ' + m.poolThen + '% → ' + m.pool + '%, re-confirmed with distributor'],
         ['upload', 'Distributed by ' + T.distributor, 'AI Green Lane · approved in 1 day'],
         ['headphones', 'Streamed ' + num(m.streams) + ' times', '7 stores']
       ];
@@ -257,7 +257,7 @@
           AF.metric('Streams this month', num(m.streams), '7 stores', 'headphones'),
           AF.metric('Your earnings', usd(m.user), (100 - m.pool) + '% of net streaming revenue', 'cash'),
           AF.metric('AI influence royalty pool', usd(m.poolAmt), m.pool + '% of net streaming revenue', 'flow'),
-          AF.metric('Human contribution', (100 - m.aiShare) + '%', 'Your uploaded vocal · re-confirmed with distributor', 'user'),
+          AF.metric('Human contribution', (100 - m.aiShare) + '%', 'Your vocal and lead guitar · ' + (100 - m.shareThen) + '% at SongSpark', 'user'),
           AF.metric('Stores', '7 of 8', 'Store X reviews by hand', 'store')
         ]) +
         '<div class="grid2 wide-left"><section class="card"><h3>The story so far</h3><ol class="timeline">' +

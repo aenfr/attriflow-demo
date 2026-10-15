@@ -300,15 +300,15 @@
   function cmpBar(ai) {
     return '<span class="cmp" role="img" aria-label="AI ' + ai + '%, human ' + (100 - ai) + '%"><i class="ai" style="width:' + ai + '%"></i><i class="human" style="width:' + (100 - ai) + '%"></i></span>';
   }
-  function partNum(p, ai) { return p.kind === 'human' ? '100% human' : ai + '% AI'; }
+  function partNum(kind, ai) { return kind === 'human' ? '100% human' : ai + '% AI'; }
   function analysisHtml() {
     var m = AF.money();
     var anyChanged = AF.PARTS.some(function (p) { return p.ai !== p.aiNow; });
     var rows = AF.PARTS.map(function (p) {
       var changed = p.ai !== p.aiNow;
       return '<tr' + (changed ? ' class="hl"' : '') + '><th scope="row"><span class="part-ico ' + AF.partTone(changed && p.kindNow ? p.kindNow : p.kind) + '">' + icon(AF.partIcon(p.name)) + '</span>' + p.name + '</th>' +
-        '<td>' + cmpBar(p.ai) + '<span class="cmp-num">' + partNum(p, p.ai) + '</span></td>' +
-        '<td>' + cmpBar(p.aiNow) + '<span class="cmp-num">' + partNum(p, p.aiNow) + '</span></td>' +
+        '<td>' + cmpBar(p.ai) + '<span class="cmp-num">' + partNum(p.kind, p.ai) + '</span></td>' +
+        '<td>' + cmpBar(p.aiNow) + '<span class="cmp-num">' + partNum(p.kindNow || p.kind, p.aiNow) + '</span></td>' +
         '<td>' + (changed ? AF.pill('warn', 'Re-scored', 'sliders') : AF.pill('good', 'Match', 'check')) + '</td></tr>';
     }).join('');
     var same = m.poolThen === m.pool;
@@ -317,7 +317,7 @@
       '<section><h3>What we hear now, compared with SongSpark</h3>' +
       '<div class="table-wrap"><table class="table cmp-table"><thead><tr><th>Part</th><th>At SongSpark</th><th>Re-scored now</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
       (anyChanged
-        ? '<p class="note warn">' + icon('sliders') + '<span>Some parts changed since you created the song on ' + T.createdShort + '. We re-weighted them and re-scored the song.</span></p>'
+        ? '<p class="note warn">' + icon('guitar') + '<span>Since you created the song on ' + T.createdShort + ', you replaced the AI <b>lead guitar</b> with your own playing. We re-weighted it from 100% AI to 100% human and re-scored the song.</span></p>'
         : '<p class="note good">' + icon('check') + '<span>Everything matches what SongSpark recorded on ' + T.createdShort + ': your uploaded vocal is human, and the AI parts are unchanged.</span></p>') +
       '</section>' +
       '<section><h3>AI influence royalty pool</h3>' +
@@ -327,7 +327,7 @@
       }).join('') + '</div>' +
       '<p class="note good">' + icon('cash') + '<span>' + (same
         ? 'You keep <b>' + (100 - m.pool) + '%</b> of your streaming revenue. The AI influence royalty pool stays at <b>' + m.pool + '%</b>, re-confirmed with distributor.'
-        : 'Your share of streaming revenue changes from <b>' + (100 - m.poolThen) + '% to ' + (100 - m.pool) + '%</b>. The AI influence royalty pool is set at <b>' + m.pool + '%</b>, re-confirmed with distributor.') +
+        : 'Your share of streaming revenue goes up from <b>' + (100 - m.poolThen) + '% to ' + (100 - m.pool) + '%</b>, because more of your song is now human. The AI influence royalty pool is lowered to <b>' + m.pool + '%</b>, re-confirmed with distributor.') +
       '</span></p></section>' +
       '<section><h3>Letter of Direction detected</h3>' +
       '<p class="muted small">You agree to these streaming revenue shares:</p>' +
@@ -342,8 +342,8 @@
   function submitSummary() {
     var m = AF.money();
     return '<div class="card summary reveal">' + AF.badge('shield', 'good') +
-      '<div><b>Congratulations, you are an ethical AI user.</b><p class="muted">AttriFlow re-scored “' + T.title + '”: AI ' + m.aiShare + '% · Human ' + (100 - m.aiShare) +
-      '% → AI influence royalty pool ' + m.pool + '%, re-confirmed with distributor. Letter of Direction agreed.</p></div></div>';
+      '<div><b>Congratulations, you are an ethical AI user.</b><p class="muted">Your own lead guitar detected. AttriFlow re-scored “' + T.title + '”: AI ' + m.shareThen + '% → ' + m.aiShare +
+      '% · AI influence royalty pool ' + m.poolThen + '% → ' + m.pool + '%, re-confirmed with distributor. Letter of Direction agreed.</p></div></div>';
   }
   function runChecks() {
     AF.modal('<div class="modal-head warn">' + icon('alert') + '<h2 id="modal-title">Your track appears to contain AI</h2></div>' +
@@ -362,8 +362,8 @@
       AF.later(function () {
         AF.modal('<div class="modal-head good">' + icon('shield') + '<h2 id="modal-title">Analysis complete</h2></div>' +
           '<p class="big-p">Your song is partly human and partly AI.</p>' +
-          '<p>The AI parts (most of the composition, the lead guitar, the percussion and AI-assisted production) were created on <b>' + T.createdShort + '</b> on <b>SongSpark</b>, ' +
-          'around the <b>lead vocal you recorded and uploaded</b>. Your vocal is human.</p>' +
+          '<p>The AI parts (most of the composition, the percussion and AI-assisted production) were created on <b>' + T.createdShort + '</b> on <b>SongSpark</b>, ' +
+          'around the <b>lead vocal you recorded and uploaded</b>. Since then, you replaced the AI lead guitar with <b>your own playing</b>.</p>' +
           '<div class="modal-actions"><button type="button" class="btn btn-primary btn-big" id="m-details" data-autofocus>See the analysis</button></div>');
         document.getElementById('m-details').addEventListener('click', function () {
           AF.modal(analysisHtml(), { wide: true });
@@ -382,9 +382,9 @@
         '<button type="button" class="btn btn-secondary" id="upload-song">Choose file</button></div>';
     }
     if (state === 'loading') {
-      return '<div class="file-drop loading"><span class="spinner" aria-hidden="true"></span><div><b>Uploading ' + T.file + '…</b><span class="up-prog" aria-hidden="true"><i></i></span></div></div>';
+      return '<div class="file-drop loading"><span class="spinner" aria-hidden="true"></span><div><b>Uploading ' + T.finalFile + '…</b><span class="up-prog" aria-hidden="true"><i></i></span></div></div>';
     }
-    return '<div class="file-drop reveal">' + icon('file') + '<div><b>' + T.file + '</b><span class="muted">' + T.fileSize + ' · downloaded from SongSpark</span></div>' +
+    return '<div class="file-drop reveal">' + icon('file') + '<div><b>' + T.finalFile + '</b><span class="muted">' + T.finalSize + ' · your final mix, with your own lead guitar</span></div>' +
       AF.pill('good', 'Uploaded', 'check') + '</div>';
   }
   V.submit = {
@@ -404,8 +404,8 @@
         (s.analyzed ? icon('check') + 'Submitted' : icon('upload') + 'Submit release') + '</button></div>' +
         '<div id="submit-out" aria-live="polite">' + (s.analyzed ? submitSummary() : '') + '</div>';
       return AF.stage(4, T.distributor, 'Upload to a distributor',
-        ['Sam uploads the song they downloaded from SongSpark to <b>' + T.distributor + '</b>.',
-         'The detector flags AI. <b>AttriFlow re-scores the song</b> against what SongSpark recorded and re-confirms the AI influence royalty pool with the distributor.'],
+        ['After downloading, Sam replaced the AI lead guitar with their own playing. Now Sam uploads the final mix to <b>' + T.distributor + '</b>.',
+         'The detector flags AI. <b>AttriFlow re-scores the song</b> against what SongSpark recorded, finds the new human guitar, and lowers the AI influence royalty pool, re-confirmed with the distributor.'],
         AF.appWindow('drop', T.distributor, ['Releases', 'Earnings', 'Help'], 'Releases', body),
         'AI detection · gradient signature extraction · LUMINA attribution');
     },
@@ -577,7 +577,7 @@
         '<div class="pool-box"><p class="card-eyebrow">AI influence royalty pool</p>' +
         '<div class="pool-meter" role="img" aria-label="Pool set to ' + m.pool + '% of a 30% maximum"><i style="width:' + (m.pool / 30 * 100) + '%"></i></div>' +
         '<div class="pool-ticks" aria-hidden="true"><span>10%</span><span>20%</span><span>30%</span></div>' +
-        '<p class="muted small">Set by AttriFlow after re-scoring: AI share ' + m.aiShare + '% → pool ' + m.pool + '% (' + m.poolThen + '% at SongSpark, re-confirmed with distributor).</p></div></div>' +
+        '<p class="muted small">Set by AttriFlow after re-scoring: AI share ' + m.aiShare + '% → pool ' + m.pool + '% (' + m.shareThen + '% AI and ' + m.poolThen + '% at SongSpark), re-confirmed with distributor.</p></div></div>' +
         AF.netSplit(m) + '</section>' +
         '<section class="card"><div class="card-head"><h3>AI influence royalty pool</h3><span class="muted">' + usd(m.poolAmt) + '</span></div>' +
         AF.poolSplit(m) +
